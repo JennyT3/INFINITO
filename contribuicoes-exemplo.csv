@@ -1,0 +1,5 @@
+tracking,tipo,metodo,nombre,estado,fecha,detalles
+CONTRIB-001,ropa,punto,Maria Silva,Verificado,2024-07-14,"Camiseta, 2kg"
+CONTRIB-002,arte,punto,João Costa,Pendiente,2024-07-13,"Obra reciclada"
+CONTRIB-003,reciclaje,recolha,Ana Sousa,Certificado,2024-07-12,"Fibra textil, 8kg"
+CONTRIB-004,solicitudes,recolha,Pedro Lima,Pendiente,2024-07-11,"Solicita 10kg" 

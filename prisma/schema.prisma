@@ -1,0 +1,201 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// CURRENT: SQLite (development only)
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// PRODUCTION: PostgreSQL configuration (uncomment for production)
+// datasource db {
+//   provider = "postgresql"
+//   url      = env("DATABASE_URL")
+//   shadowDatabaseUrl = env("SHADOW_DATABASE_URL") // For migrations
+// }
+
+model PickupRequest {
+  id        Int      @id @default(autoincrement())
+  phone     String
+  address   String
+  weight    Int
+  pickupDay String
+  createdAt DateTime @default(now())
+  
+  // Production indexes
+  // @@index([createdAt])
+  // @@index([pickupDay])
+}
+
+model Contribution {
+  id           Int      @id @default(autoincrement())
+  tracking     String   @unique
+  tipo         String
+  metodo       String
+  nome         String
+  estado       String
+  fecha        DateTime @default(now())
+  detalles     String?
+  
+  // Tracking states - Seguimiento: Entregado → Verificado → Certificado disponible
+  trackingState String  @default("pendiente") // "entregado", "verificado", "certificado_disponible"
+  adminUserId   String? // ID del admin que procesó
+  
+  // Admin classification - Clasificación: Reutilizable/Reparable/Reciclable
+  classification String? // "reutilizable", "reparable", "reciclable"
+  destination   String? // "marketplace", "donacion", "artistas", "reciclaje"
+  
+  // Certificado digital con hash SHA-256 + timestamp
+  certificateHash String? // Hash SHA-256 del certificado
+  certificateDate DateTime? // Timestamp del certificado
+  
+  // Metrics with uncertainty tracking
+  totalItems   Int      @default(0)
+  recyclingPercentage Int @default(0)
+  repairPercentage    Int @default(0)
+  
+  // Material composition
+  cotton       Int      @default(0)
+  polyester    Int      @default(0)
+  wool         Int      @default(0)
+  other        Int      @default(0)
+  
+  // LCA-based environmental impact
+  co2Saved     Float    @default(0)
+  waterSaved   Float    @default(0)
+  naturalResources Int  @default(0)
+  
+  // New fields for better tracking
+  aiConfidence Float?   // AI analysis confidence (0-1)
+  methodology  String?  // "ecoinvent v3.10", "manual", etc.
+  uncertainty  String?  // "±25%"
+  region       String?  // Manufacturing region
+  verified     Boolean  @default(false) // Human verification
+  
+  // Separate image storage (URLs only)
+  imageUrls    String?  // JSON array of S3/Cloudinary URLs
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  // Production indexes for performance
+  // @@index([tracking])
+  // @@index([estado])
+  // @@index([fecha])
+  // @@index([verified])
+}
+
+model Product {
+  id           Int      @id @default(autoincrement())
+  name         String
+  garmentType  String
+  gender       String
+  color        String
+  size         String
+  material     String
+  country      String
+  condition    String
+  price        Float
+  
+  // Revenue model - 5% comisión, mínimo €1, máximo €10
+  originalPrice Float   // Precio original del vendedor
+  commission    Float   // Comisión calculada
+  finalPrice    Float   // Precio final después de comisión
+  
+  // Seller information
+  sellerName   String
+  sellerEmail  String?
+  sellerPhone  String?
+  
+  // Automated weight and impact
+  estimatedWeight Float @default(0) // Peso estándar por tipo de prenda
+  standardImpact  Json? // Impacto ambiental estándar {co2, water, resources}
+  
+  // AI Detection results
+  aiDetection  Json?   // Resultado completo de la IA
+  aiConfidence Float?  // Confianza de la IA (0-1)
+  
+  // Photo URLs - mínimo 2 fotos: prenda + etiqueta
+  photo1Url    String  // Foto de la prenda
+  photo2Url    String  // Foto de la etiqueta
+  photo3Url    String? // Foto adicional
+  
+  // Status tracking
+  status       String  @default("pending") // "pending", "published", "sold", "cancelled"
+  publishedAt  DateTime?
+  soldAt       DateTime?
+  
+  // Environmental impact
+  impactCo2    String?
+  impactWater  String?
+  impactEff    String?
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  // @@index([status])
+  // @@index([garmentType])
+  // @@index([publishedAt])
+}
+
+// New model for user impact tracking
+model UserImpact {
+  id           Int      @id @default(autoincrement())
+  userId       String   @unique
+  
+  // Contribution tracking
+  totalContributions Int @default(0)
+  totalPurchases     Int @default(0)
+  
+  // Environmental impact
+  totalCo2Saved      Float @default(0)
+  totalWaterSaved    Float @default(0)
+  totalEnergySignificant Int @default(0)
+  
+  // Rebound effect calculation
+  reboundFactor      Float @default(0.7) // Replacement factor
+  netImpact          Float @default(0)   // Net positive/negative impact
+  
+  // Gamification
+  points             Int   @default(0)
+  level              Int   @default(1)
+  badges             String? // JSON array of earned badges
+  
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  
+  // @@index([userId])
+  // @@index([points])
+}
+
+// New model for logistics optimization
+model LogisticsRoute {
+  id           Int      @id @default(autoincrement())
+  routeId      String   @unique
+  postalCode   String
+  scheduledDate DateTime
+  
+  // Route optimization
+  pickupRequests String  // JSON array of pickup request IDs
+  totalWeight    Int     @default(0)
+  totalStops     Int     @default(0)
+  optimizedRoute String? // JSON optimized route data
+  
+  // Status tracking
+  status       String   @default("planned") // planned, in_progress, completed
+  driverId     String?
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  // @@index([postalCode])
+  // @@index([scheduledDate])
+  // @@index([status])
+}
