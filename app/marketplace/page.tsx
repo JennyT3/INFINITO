@@ -122,18 +122,18 @@ const marketplaceTranslations = {
 	}
 };
 
-// Produtos de exemplo com dados reais
+// Sample products with real data
 const sampleProducts: Product[] = [
 	{
 		id: 1,
-		name: "Camiseta Orgânica",
-		type: "Camiseta",
-		gender: "Unissex",
+		name: "Organic T-Shirt",
+		type: "T-Shirt",
+		gender: "Unisex",
 		size: "M",
-		color: "Azul",
+		color: "Blue",
 		colorCode: "#3E88FF",
-		price: "25 USDC",
-		material: "Algodão Orgânico",
+		price: "2 USDC",
+		material: "Organic Cotton",
 		country: "Portugal",
 		city: "Porto",
 		seller: "EcoTextil",
@@ -146,15 +146,15 @@ const sampleProducts: Product[] = [
 	},
 	{
 		id: 2,
-		name: "Vestido Reciclado",
-		type: "Vestido",
-		gender: "Feminino",
+		name: "Recycled Dress",
+		type: "Dress",
+		gender: "Women",
 		size: "S",
-		color: "Verde",
+		color: "Green",
 		colorCode: "#689610",
-		price: "45 USDC",
-		material: "Poliéster Reciclado",
-		country: "França",
+		price: "2 USDC",
+		material: "Recycled Polyester",
+		country: "France",
 		city: "Lyon",
 		seller: "GreenFashion",
 		image: "/images/Item2.jpeg",
@@ -166,15 +166,15 @@ const sampleProducts: Product[] = [
 	},
 	{
 		id: 3,
-		name: "Jeans Sustentável",
-		type: "Calças",
-		gender: "Unissex",
+		name: "Sustainable Jeans",
+		type: "Pants",
+		gender: "Unisex",
 		size: "L",
-		color: "Azul Escuro",
+		color: "Dark Blue",
 		colorCode: "#1e3a8a",
 		price: "65 USDC",
-		material: "Algodão Orgânico + Elastano",
-		country: "Espanha",
+		material: "Organic Cotton + Elastane",
+		country: "Spain",
 		city: "Barcelona",
 		seller: "DenimEco",
 		image: "/images/Item3.jpeg",
@@ -186,15 +186,15 @@ const sampleProducts: Product[] = [
 	},
 	{
 		id: 4,
-		name: "Camisola Lã Merino",
-		type: "Camisola",
-		gender: "Masculino",
+		name: "Merino Wool Sweater",
+		type: "Sweater",
+		gender: "Men",
 		size: "XL",
-		color: "Cinza",
+		color: "Gray",
 		colorCode: "#6b7280",
 		price: "85 USDC",
-		material: "Lã Merino Certificada",
-		country: "Irlanda",
+		material: "Certified Merino Wool",
+		country: "Ireland",
 		city: "Dublin",
 		seller: "WoolCraft",
 		image: "/images/Item4.jpeg",
@@ -221,7 +221,7 @@ export default function MarketplacePage() {
 
 	const t = marketplaceTranslations[language] || marketplaceTranslations.pt;
 
-	// Carregar produtos da API
+	// Load products from API
 	useEffect(() => {
 		const fetchProducts = async () => {
 			try {
@@ -230,11 +230,11 @@ export default function MarketplacePage() {
 				if (data.products && Array.isArray(data.products)) {
 					setProducts(prev => [...prev, ...data.products.map((p: any) => ({
 						id: p.id || Math.random(),
-						name: p.name || 'Produto sem nome',
-						type: p.garmentType || 'Peça',
-						gender: p.gender || 'Unissex',
+						name: p.name || 'Unnamed Product',
+						type: p.garmentType || 'Item',
+						gender: p.gender || 'Unisex',
 						size: p.size || 'M',
-						color: p.color || 'Variado',
+						color: p.color || 'Varied',
 						colorCode: '#3E88FF',
 						price: typeof p.price === 'number' ? `${p.price} USDC` : (p.price ?? ''),
 						material: p.material ?? '',
@@ -250,53 +250,47 @@ export default function MarketplacePage() {
 					}))]);
 				}
 			} catch (error) {
-				console.error('Erro ao carregar produtos:', error);
+				console.error('Error loading products:', error);
 			}
 		};
 
 		fetchProducts();
 	}, []);
 
-	// Filtrar produtos
+	// Filter products
 	const filteredProducts = products.filter(product =>
 		product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
 		product.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
 		product.material.toLowerCase().includes(searchQuery.toLowerCase())
 	);
 
-	// Fuerza el precio a 2 € y ajusta datos de ejemplo
-	const forcedProducts = products.map((p, i) => ({
-		...p,
-		price: '2 USDC',
-		country: 'Portugal',
-		city: ['Vila Real', 'Porto', 'Braga', 'Chaves', 'Peso da Régua', 'Sabrosa', 'Murça', 'Alijó'][i % 8],
-		material: p.material.includes('+') ? p.material.replace(/\+\s?/g, match => `+ ${Math.floor(80 - i*10)}% `) + `${20 + i*10}%` : p.material
-	}));
+	// Use original products without forcing prices
+	const displayProducts = products;
 
-	// Abrir modal de pagamento
+	// Open payment modal
 	const handleBuyNow = (product: Product) => {
 		setSelectedProduct(product);
 		setShowPaymentDialog(true);
 	};
 
-	// Confirmar compra
+	// Confirm purchase
 	const handleConfirmPurchase = async () => {
 		if (!selectedPaymentId) return;
 
 		setIsProcessing(true);
 		
-		// Simular processamento
+		// Simulate processing
 		setTimeout(() => {
 			setIsProcessing(false);
 			setShowPaymentDialog(false);
 			setSelectedProduct(null);
 			
-			// Mostrar confirmação
-			alert(`Compra confirmada! Produto: ${selectedProduct?.name}`);
+			// Show confirmation
+			alert(`Purchase confirmed! Product: ${selectedProduct?.name}`);
 		}, 2000);
 	};
 
-	// Componente de produto
+	// Product component
 	const ProductCard = ({ product }: { product: Product }) => (
 		<div className="group bg-white/90 border border-gray-200 rounded-xl shadow-lg flex flex-col overflow-hidden max-w-xs mx-auto mb-4" style={{ minWidth: 0, width: 280, minHeight: 280 }}>
 			{/* Imagen y precio */}
@@ -448,7 +442,7 @@ export default function MarketplacePage() {
 
 			{/* Grid de produtos */}
 							<div className={`grid ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' : 'grid-cols-1'} gap-4`}>
-				{forcedProducts.map((product) => (
+				{displayProducts.map((product) => (
 					<ProductCard key={product.id} product={product} />
 				))}
 			</div>

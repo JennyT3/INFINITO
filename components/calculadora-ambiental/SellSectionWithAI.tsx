@@ -20,9 +20,6 @@ interface ProductCard {
 		water: number;
 		resources: number;
 	};
-	suggestedPrice: number;
-	commission: number;
-	finalPrice: number;
 	aiConfidence: number;
 }
 
@@ -33,6 +30,7 @@ export default function SellSectionWithAI({ tracking }: { tracking: string }) {
 	const [files, setFiles] = useState<{garment: File|null, label: File|null}>({ garment: null, label: null });
 	const [isProcessing, setIsProcessing] = useState(false);
 	const [product, setProduct] = useState<ProductCard|null>(null);
+	const [userPrice, setUserPrice] = useState<string>('');
 	const [form, setForm] = useState({ name: '', email: '', phone: '', payment: '', terms: false });
 	const router = useRouter();
 
@@ -78,23 +76,20 @@ export default function SellSectionWithAI({ tracking }: { tracking: string }) {
 		setIsProcessing(true);
 		setStep('processing');
 		setTimeout(() => {
-			// Simulación de análisis AI
-			const productData: ProductCard = {
-				name: 'T-Shirt Blue',
-				garmentType: 'T-Shirt',
-				gender: 'Unisex',
-				color: 'Blue',
-				size: 'M',
-				material: 'Organic Cotton',
-				country: 'Portugal',
-				condition: 'Good',
-				estimatedWeight: 0.3,
-				environmentalImpact: { co2: 2, water: 500, resources: 80 },
-				suggestedPrice: 12,
-				commission: 2,
-				finalPrice: 14,
-				aiConfidence: 0.92
-			};
+					// Simulación de análisis AI
+		const productData: ProductCard = {
+			name: 'T-Shirt Blue',
+			garmentType: 'T-Shirt',
+			gender: 'Unisex',
+			color: 'Blue',
+			size: 'M',
+			material: 'Organic Cotton',
+			country: 'Portugal',
+			condition: 'Good',
+			estimatedWeight: 0.3,
+			environmentalImpact: { co2: 2, water: 500, resources: 80 },
+			aiConfidence: 0.92
+		};
 			setProduct(productData);
 			setStep('preview');
 			setIsProcessing(false);
@@ -114,10 +109,9 @@ export default function SellSectionWithAI({ tracking }: { tracking: string }) {
 			return;
 		}
 		
-		// Validación del precio
-		if (!product.suggestedPrice || product.suggestedPrice <= 0) {
-			console.error('❌ Debug: Invalid suggestedPrice =', product.suggestedPrice);
-			setError('Invalid product price. Please complete the AI analysis first.');
+		// Validación del precio ingresado por el usuario
+		if (!userPrice || parseFloat(userPrice) <= 0) {
+			setError('Please enter a valid price for your product.');
 			return;
 		}
 		
@@ -257,16 +251,7 @@ export default function SellSectionWithAI({ tracking }: { tracking: string }) {
 				<h2 className="text-2xl font-bold mb-2 text-center">Add Photos</h2>
 				<p className="text-gray-600 mb-6 text-center">Minimum 2 photos: item and label</p>
 				
-				{/* Tracking Information */}
-				<div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-					<div className="flex items-center justify-between">
-						<span className="font-semibold text-blue-800">Contribution Code:</span>
-						<span className="font-mono text-sm bg-blue-100 px-2 py-1 rounded text-blue-800">{tracking}</span>
-					</div>
-					<div className="text-xs text-blue-600 mt-1">
-						This product will be linked to your contribution
-					</div>
-				</div>
+
 
 				<div className="flex flex-col gap-6">
 					<div className="flex flex-col items-center gap-2">
@@ -315,16 +300,7 @@ export default function SellSectionWithAI({ tracking }: { tracking: string }) {
 			<div className="w-full max-w-md mx-auto bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-8 mt-8 animate-float-card">
 				<h2 className="text-2xl font-bold mb-4 text-center">Product Preview</h2>
 				
-				{/* Tracking Validation Status */}
-				<div className="mb-4 p-3 rounded-lg border">
-					<div className="flex items-center justify-between mb-2">
-						<span className="font-semibold text-gray-700">Contribution Tracking:</span>
-						<span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">{tracking}</span>
-					</div>
-					<div className="text-sm text-gray-600">
-						✅ Valid contribution code - Ready to publish
-					</div>
-				</div>
+
 
 				<div className="flex flex-col gap-4">
 					<div className="text-center">
@@ -346,10 +322,21 @@ export default function SellSectionWithAI({ tracking }: { tracking: string }) {
 						</div>
 					</div>
 					<div className="bg-blue-50 rounded-lg p-4">
-						<h4 className="font-semibold text-blue-800 mb-2">Suggested Price</h4>
+						<h4 className="font-semibold text-blue-800 mb-2">Set Your Price</h4>
 						<div className="text-center">
-							<div className="text-3xl font-bold text-blue-600">€{product.suggestedPrice}</div>
-							<div className="text-sm text-gray-600">+ €{product.commission} fee = €{product.finalPrice} total</div>
+							<div className="flex items-center justify-center gap-2">
+								<input
+									type="number"
+									value={userPrice}
+									onChange={(e) => setUserPrice(e.target.value)}
+									placeholder="0"
+									className="text-3xl font-bold text-blue-600 bg-transparent border-b-2 border-blue-300 focus:border-blue-600 outline-none text-center w-24"
+									min="0"
+									step="0.01"
+								/>
+								<span className="text-3xl font-bold text-blue-600">USDC</span>
+							</div>
+							<div className="text-sm text-gray-600 mt-2">Enter your desired selling price</div>
 						</div>
 					</div>
 					{error && <div className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-lg">{error}</div>}

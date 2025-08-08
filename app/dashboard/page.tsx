@@ -49,7 +49,7 @@ export default function DashboardPage() {
 			icon: <Fingerprint className="w-6 h-6 md:w-8 md:h-8 text-white" />, 
 			label: t('footprint'),
 			description: t('footprintDesc'),
-			path: '/profile/impact-passport',
+			path: '/profile/passport',
 			color: '#43B2D2',
 			hoverColor: '#56C4E5'
 		}

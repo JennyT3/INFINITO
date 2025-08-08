@@ -1,249 +1,392 @@
 "use client";
-
 import React, { useState } from 'react';
+import { 
+  ArrowLeft, 
+  Search, 
+  User, 
+  Share2, 
+  Trash2, 
+  Home, 
+  Recycle,
+  Leaf,
+  ExternalLink
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import BottomNavigationMenu from '@/components/BottomNavigationMenu';
-import { ArrowLeft, Download, Share2, Leaf, Droplets, Zap, Package, ShoppingBag } from 'lucide-react';
 
 export default function PassportPage() {
   const router = useRouter();
-  const [isDownloading, setIsDownloading] = useState(false);
+  const [hoveredSection, setHoveredSection] = useState<string | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [progressStep, setProgressStep] = useState(3); // 0-4 steps
+  
+
+  
+  // Statistical data
+  const sectionData = {
+    sales: { number: 12, color: '#4CAF50', label: 'Sales' },
+    donations: { number: 25, color: '#E91E63', label: 'Donations' },
+    purchases: { number: 8, color: '#2196F3', label: 'Purchases' },
+    collectibles: { number: 34, color: '#FF9800', label: 'Collectibles' },
+    footprint: { 
+      co2: '142.5', 
+      water: '8,450', 
+      resources: '89',
+      color: '#FF9800', 
+      label: 'Environmental Footprint' 
+    }
+  };
+
+  // Timeline tracking data
+  const timelineData = [
+    { date: '15 Jan 2025', status: 'Registered', completed: true },
+    { date: '16 Jan 2025', status: 'Received', completed: true },
+    { date: '18 Jan 2025', status: 'Verified', completed: true },
+    { date: '20 Jan 2025', status: 'Blockchain Certified', completed: false }
+  ];
+  
+  // Exact beige background from image
+  const appBackground = {
+    backgroundColor: "#EDE4DA",
+    backgroundImage: `
+      radial-gradient(circle at 20% 50%, rgba(120, 119, 108, 0.1) 1px, transparent 1px),
+      radial-gradient(circle at 80% 20%, rgba(120, 119, 108, 0.1) 1px, transparent 1px),
+      radial-gradient(circle at 40% 80%, rgba(120, 119, 108, 0.08) 1px, transparent 1px),
+      radial-gradient(circle at 0% 100%, rgba(120, 119, 108, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(120, 119, 108, 0.02) 1px, transparent 1px),
+      linear-gradient(0deg, rgba(120, 119, 108, 0.02) 1px, transparent 1px)
+    `,
+    backgroundSize: "20px 20px, 25px 25px, 30px 30px, 35px 35px, 15px 15px, 15px 15px",
+  };
+
+  // Interactive colored circle component
+  const InteractiveCircle = () => (
+    <div className="relative w-64 h-64 mx-auto mb-8">
+      <svg width="256" height="256" viewBox="0 0 256 256" className="transform -rotate-90">
+        {/* Green Segment - Sales */}
+        <path
+          d="M 20 128 A 108 108 0 0 1 128 20 L 128 128 Z"
+          fill={hoveredSection === 'sales' ? '#66BB6A' : '#4CAF50'}
+          className="cursor-pointer transition-all duration-300"
+          onMouseEnter={() => setHoveredSection('sales')}
+          onMouseLeave={() => setHoveredSection(null)}
+        />
+        {/* Pink/Magenta Segment - Donations */}
+        <path
+          d="M 128 20 A 108 108 0 0 1 236 128 L 128 128 Z"
+          fill={hoveredSection === 'donations' ? '#EC407A' : '#E91E63'}
+          className="cursor-pointer transition-all duration-300"
+          onMouseEnter={() => setHoveredSection('donations')}
+          onMouseLeave={() => setHoveredSection(null)}
+        />
+        {/* Orange Segment - Environmental footprint */}
+        <path
+          d="M 236 128 A 108 108 0 0 1 128 236 L 128 128 Z"
+          fill={hoveredSection === 'footprint' ? '#FFB74D' : '#FF9800'}
+          className="cursor-pointer transition-all duration-300"
+          onMouseEnter={() => setHoveredSection('footprint')}
+          onMouseLeave={() => setHoveredSection(null)}
+        />
+        {/* Blue Segment - Purchases */}
+        <path
+          d="M 128 236 A 108 108 0 0 1 20 128 L 128 128 Z"
+          fill={hoveredSection === 'purchases' ? '#42A5F5' : '#2196F3'}
+          className="cursor-pointer transition-all duration-300"
+          onMouseEnter={() => setHoveredSection('purchases')}
+          onMouseLeave={() => setHoveredSection(null)}
+        />
+        
+        {/* Inner circle */}
+        <circle cx="128" cy="128" r="60" fill="#EDE4DA" />
+        
+        {/* Dynamic central text */}
+        {hoveredSection && (
+          <text 
+            x="128" 
+            y="135" 
+            textAnchor="middle" 
+            className="font-bold text-lg fill-gray-800 transform rotate-90"
+            style={{ transformOrigin: '128px 128px' }}
+          >
+            {hoveredSection === 'footprint' 
+              ? sectionData.footprint.co2 
+              : (sectionData[hoveredSection as keyof typeof sectionData] as any)?.number}
+          </text>
+        )}
+      </svg>
+      
+      {/* Section labels that appear on hover */}
+      {hoveredSection === 'donations' && (
+        <div className="absolute top-0 right-1/2 transform translate-x-1/2 -translate-y-2 transition-all duration-300">
+          <span className="text-sm font-medium text-gray-700 bg-white/90 px-2 py-1 rounded shadow">
+            Donations
+          </span>
+          <div className="w-px h-8 bg-gray-400 mx-auto"></div>
+        </div>
+      )}
+      
+      {hoveredSection === 'footprint' && (
+        <div className="absolute right-0 top-1/2 transform translate-x-2 -translate-y-1/2 transition-all duration-300">
+          <div className="text-right bg-white/90 px-2 py-1 rounded shadow">
+            <span className="text-sm font-medium text-gray-700">Environmental</span>
+            <br />
+            <span className="text-sm font-medium text-gray-700">Footprint</span>
+          </div>
+          <div className="w-8 h-px bg-gray-400 ml-2"></div>
+        </div>
+      )}
+      
+      {hoveredSection === 'purchases' && (
+        <div className="absolute left-0 top-1/2 transform -translate-x-2 -translate-y-1/2 transition-all duration-300">
+          <div className="text-left bg-white/90 px-2 py-1 rounded shadow">
+            <span className="text-sm font-medium text-gray-700">Purchases</span>
+          </div>
+          <div className="w-8 h-px bg-gray-400 mr-2"></div>
+        </div>
+      )}
+      
+      {hoveredSection === 'sales' && (
+        <div className="absolute top-8 left-8 transition-all duration-300">
+          <div className="text-left bg-white/90 px-2 py-1 rounded shadow">
+            <span className="text-sm font-medium text-gray-700">Sales</span>
+          </div>
+          <div className="w-6 h-px bg-gray-400 rotate-45 mt-1"></div>
+        </div>
+      )}
+    </div>
+  );
+
+  // Share modal
+  const ShareModal = () => {
+    if (!showShareModal) return null;
+    
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-2xl p-6 mx-4 max-w-sm w-full">
+          <h3 className="text-xl font-bold text-gray-800 mb-4">Share Profile</h3>
+          <p className="text-gray-600 mb-4">
+            Share your environmental impact with friends and family
+          </p>
+          
+          <div className="space-y-3">
+            <button className="w-full bg-blue-500 text-white py-3 rounded-xl font-medium">
+              Share via WhatsApp
+            </button>
+            <button className="w-full bg-gray-100 text-gray-800 py-3 rounded-xl font-medium">
+              Copy Link
+            </button>
+            <button 
+              onClick={() => setShowShareModal(false)}
+              className="w-full bg-gray-100 text-gray-800 py-3 rounded-xl font-medium"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const handleBack = () => {
     router.push('/profile');
   };
 
-  const downloadCertificate = async () => {
-    setIsDownloading(true);
-    try {
-      // Simulate PDF generation
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Create a mock PDF download
-      const blob = new Blob(['Environmental Certificate PDF Content'], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'environmental-certificate.pdf';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Error downloading certificate:', error);
-    } finally {
-      setIsDownloading(false);
-    }
-  };
-
-  const shareProfile = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: 'My Environmental Impact',
-        text: 'Check out my environmental impact on INFINITO!',
-        url: window.location.href
-      });
-    } else {
-      // Fallback for browsers that don't support Web Share API
-      navigator.clipboard.writeText(window.location.href);
-      alert('Profile link copied to clipboard!');
-    }
-  };
-
   return (
-    <div 
-      className="min-h-screen w-full flex flex-col items-center font-raleway px-2 py-4 pb-24"
-      style={{
-        backgroundColor: "#EDE4DA",
-        backgroundImage: "url('/fondo.png'), radial-gradient(circle at 20% 50%, rgba(120, 119, 108, 0.1) 1px, transparent 1px), radial-gradient(circle at 80% 20%, rgba(120, 119, 108, 0.1) 1px, transparent 1px)",
-        backgroundSize: "cover, 20px 20px, 25px 25px",
-        backgroundRepeat: "no-repeat, repeat, repeat"
-      }}
-    >
-      {/* Header */}
-      <div 
-        className="w-full max-w-md md:max-w-4xl lg:max-w-6xl bg-white/20 backdrop-blur-md border-b border-white/30 px-6 py-4 mb-6 rounded-2xl sticky top-4 z-10"
-        style={{ filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.1))" }}
-      >
-        <div className="flex items-center justify-between">
-          <button
+    <div className="min-h-screen font-sans" style={appBackground}>
+      <div className="max-w-sm mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between pt-12 pb-6 px-4">
+          <button 
             onClick={handleBack}
-            className="w-10 h-10 md:w-12 md:h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/40 hover:bg-white/100 transition-all duration-300 hover:scale-105"
-            style={{ filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.1))" }}
+            className="w-10 h-10 bg-transparent rounded-full flex items-center justify-center"
           >
-            <ArrowLeft className="w-5 h-5 md:w-6 md:h-6 text-gray-700" />
+            <ArrowLeft className="w-6 h-6 text-gray-700" />
           </button>
-          <h1 className="font-bold text-lg md:text-xl text-gray-800 tracking-wider">
-            Environmental Passport
-          </h1>
-          <div className="w-10 md:w-12"></div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="w-full max-w-md md:max-w-4xl lg:max-w-6xl">
-        {/* Círculo de métricas */}
-        <div className="bg-white/25 backdrop-blur-md rounded-2xl p-6 mb-6 border border-white/30">
-          <h2 className="text-xl font-bold text-gray-800 mb-4 text-center">Your Impact</h2>
           
-          {/* Círculo SVG Interactivo */}
-          <div className="relative w-64 h-64 mx-auto mb-6">
-            <svg width="256" height="256" viewBox="0 0 256 256" className="w-full h-full">
-              {/* Segmento Verde - Contribuciones */}
-              <path
-                d="M 128 20 A 108 108 0 0 1 236 128 L 128 128 Z"
-                fill="#689610"
-                className="cursor-pointer transition-all duration-300 hover:opacity-80"
-                style={{ filter: "drop-shadow(0 2px 4px rgba(104,150,16,0.3))" }}
+          <div className="flex gap-2">
+            <button className="w-10 h-10 bg-white/80 rounded-full flex items-center justify-center border border-gray-300">
+              <Search className="w-5 h-5 text-gray-700" />
+            </button>
+            <button className="w-10 h-10 bg-black rounded-full flex items-center justify-center">
+              <User className="w-5 h-5 text-white" />
+            </button>
+          </div>
+        </div>
+
+        {/* Logo INFINITO */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold">
+            <span className="text-blue-600">I</span>
+            <span className="text-red-500">N</span>
+            <span className="text-yellow-500">F</span>
+            <span className="text-blue-600">I</span>
+            <span className="text-red-500">N</span>
+            <span className="text-green-500">I</span>
+            <span className="text-purple-600">T</span>
+            <span className="text-orange-500">O</span>
+            <span className="text-gray-600 text-2xl">.me</span>
+          </h1>
+        </div>
+
+
+
+        {/* Interactive Central Circle */}
+        <InteractiveCircle />
+
+        {/* Bottom sections with colored numbers */}
+        <div className="grid grid-cols-3 gap-3 mb-6 px-4">
+          <div className="bg-white/90 rounded-2xl p-4 text-center shadow-sm border border-gray-200">
+            <div 
+              className="text-2xl font-bold mb-1"
+              style={{ color: sectionData.donations.color }}
+            >
+              {sectionData.donations.number}
+            </div>
+            <div className="text-sm font-medium text-gray-800">Donations</div>
+          </div>
+          <div className="bg-white/90 rounded-2xl p-4 text-center shadow-sm border border-gray-200">
+            <div 
+              className="text-2xl font-bold mb-1"
+              style={{ color: sectionData.purchases.color }}
+            >
+              {sectionData.purchases.number}
+            </div>
+            <div className="text-sm font-medium text-gray-800">Purchases</div>
+          </div>
+          <div className="bg-white/90 rounded-2xl p-4 text-center shadow-sm border border-gray-200">
+            <div 
+              className="text-2xl font-bold mb-1"
+              style={{ color: sectionData.collectibles.color }}
+            >
+              {sectionData.collectibles.number}
+            </div>
+            <div className="text-sm font-medium text-gray-800">Collectibles</div>
+          </div>
+        </div>
+
+        {/* Interactive tracking button */}
+        <div className="px-4 mb-6">
+          <button 
+            className="w-full bg-white/90 rounded-2xl py-3 px-4 text-left border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+            onClick={() => setProgressStep((progressStep + 1) % 5)}
+          >
+            <span className="text-gray-700 font-medium">Track your donations journey →</span>
+            <div className="text-xs text-gray-500 mt-1">
+              {timelineData[progressStep]?.status} - {timelineData[progressStep]?.date}
+            </div>
+          </button>
+        </div>
+
+        {/* Interactive progress bar */}
+        <div className="px-4 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex-1 h-2 bg-gray-200 rounded-full relative">
+              <div 
+                className="absolute top-0 left-0 h-2 bg-blue-500 rounded-full transition-all duration-500" 
+                style={{width: `${(progressStep / 4) * 100}%`}}
+              ></div>
+              
+              {/* Progress points */}
+              {timelineData.map((item, index) => (
+                <div 
+                  key={index}
+                  className={`absolute -top-1 w-4 h-4 rounded-full transition-colors duration-300 cursor-pointer ${
+                    index <= progressStep ? 'bg-blue-500' : 'bg-gray-300'
+                  }`}
+                  style={{left: `${(index / 4) * 100}%`}}
+                  onClick={() => setProgressStep(index)}
+                  title={`${item.status} - ${item.date}`}
+                ></div>
+              ))}
+            </div>
+          </div>
+          
+          {/* Timeline labels */}
+          <div className="flex justify-between mt-2 text-xs text-gray-600">
+            {timelineData.map((item, index) => (
+              <div key={index} className="text-center" style={{width: '25%'}}>
+                <div className="font-medium">{item.status}</div>
+                <div>{item.date}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Environmental Footprint Card with real values */}
+        <div className="mx-4 mb-6">
+          <div className="bg-white/95 rounded-2xl p-6 shadow-lg border border-gray-200">
+            <div className="flex items-start gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                    <Leaf className="w-5 h-5 text-green-600" />
+                  </div>
+                  <h3 className="font-bold text-lg text-gray-800">Environmental Footprint</h3>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
+                      <span className="text-xs">☁️</span>
+                    </div>
+                    <div>
+                      <div className="font-bold text-xl text-gray-800">{sectionData.footprint.co2} Kg</div>
+                      <div className="text-sm text-gray-600">Carbon emissions avoided</div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
+                      <span className="text-xs">💧</span>
+                    </div>
+                    <div>
+                      <div className="font-bold text-xl text-gray-800">{sectionData.footprint.water} LT</div>
+                      <div className="text-sm text-gray-600">Water consumption preserved</div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
+                      <span className="text-xs">⚡</span>
+                    </div>
+                    <div>
+                      <div className="font-bold text-xl text-gray-800">{sectionData.footprint.resources}%</div>
+                      <div className="text-sm text-gray-600">Natural resources saved</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Share profile modal */}
+        <div className="mx-4 mb-6">
+          <div className="bg-white/95 rounded-2xl p-4 shadow-lg border border-gray-200">
+            <h4 className="font-semibold text-gray-800 mb-3">Share your INFINITO.me profile</h4>
+            <p className="text-sm text-gray-600 mb-4">
+              Anyone can access this link to view your profile on the web
+            </p>
+            
+            <div className="flex gap-3">
+              <input 
+                type="text" 
+                value="infinito.me/User" 
+                readOnly
+                className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
               />
-              
-              {/* Segmento Azul - Compras */}
-              <path
-                d="M 236 128 A 108 108 0 0 1 128 236 L 128 128 Z"
-                fill="#3E88FF"
-                className="cursor-pointer transition-all duration-300 hover:opacity-80"
-                style={{ filter: "drop-shadow(0 2px 4px rgba(62,136,255,0.3))" }}
-              />
-              
-              {/* Segmento Naranja - Ventas */}
-              <path
-                d="M 128 236 A 108 108 0 0 1 20 128 L 128 128 Z"
-                fill="#F47802"
-                className="cursor-pointer transition-all duration-300 hover:opacity-80"
-                style={{ filter: "drop-shadow(0 2px 4px rgba(244,120,2,0.3))" }}
-              />
-              
-              {/* Segmento Rosa - Donaciones */}
-              <path
-                d="M 20 128 A 108 108 0 0 1 128 20 L 128 128 Z"
-                fill="#D42D66"
-                className="cursor-pointer transition-all duration-300 hover:opacity-80"
-                style={{ filter: "drop-shadow(0 2px 4px rgba(212,45,102,0.3))" }}
-              />
-              
-              {/* Círculo interno */}
-              <circle cx="128" cy="128" r="60" fill="#EDE4DA" />
-              
-              {/* Texto central */}
-              <text 
-                x="128" 
-                y="135" 
-                textAnchor="middle" 
-                className="font-bold text-2xl fill-gray-800"
+              <button 
+                onClick={() => setShowShareModal(true)}
+                className="px-6 py-2 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors"
               >
-                11
-              </text>
-            </svg>
-          </div>
-
-          {/* Leyenda de secciones */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full" style={{ backgroundColor: "#689610" }}></div>
-              <span className="text-sm font-medium text-gray-700">Contributions: 5</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full" style={{ backgroundColor: "#3E88FF" }}></div>
-              <span className="text-sm font-medium text-gray-700">Purchases: 2</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full" style={{ backgroundColor: "#F47802" }}></div>
-              <span className="text-sm font-medium text-gray-700">Sales: 3</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full" style={{ backgroundColor: "#D42D66" }}></div>
-              <span className="text-sm font-medium text-gray-700">Donations: 1</span>
-            </div>
-          </div>
-
-          {/* Métricas de impacto */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="text-center">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-2 mx-auto" style={{ backgroundColor: "#689610" }}>
-                <Leaf className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-lg md:text-xl font-bold text-gray-800 tracking-wider">25.5 Kg</span>
-              <p className="text-xs text-gray-600 font-medium">CO₂ Saved</p>
-            </div>
-            <div className="text-center">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-2 mx-auto" style={{ backgroundColor: "#43B2D2" }}>
-                <Droplets className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-lg md:text-xl font-bold text-gray-800 tracking-wider">150.2 LT</span>
-              <p className="text-xs text-gray-600 font-medium">Water Saved</p>
-            </div>
-            <div className="text-center">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-2 mx-auto" style={{ backgroundColor: "#F47802" }}>
-                <Zap className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-lg md:text-xl font-bold text-gray-800 tracking-wider">85%</span>
-              <p className="text-xs text-gray-600 font-medium">Resources</p>
-            </div>
-          </div>
-
-          {/* Botones de acción */}
-          <div className="flex gap-3">
-            <button
-              onClick={downloadCertificate}
-              disabled={isDownloading}
-              className="flex-1 text-white px-4 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border border-white/30 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ 
-                backgroundColor: "#3E88FF",
-                filter: "drop-shadow(0 4px 8px rgba(62,136,255,0.3))"
-              }}
-            >
-              <Download className="w-4 h-4" />
-              <span className="tracking-wider text-sm">
-                {isDownloading ? 'Generating...' : 'Download PDF'}
-              </span>
-            </button>
-            <button
-              onClick={shareProfile}
-              className="flex-1 text-white px-4 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border border-white/30 flex items-center justify-center gap-2"
-              style={{ 
-                backgroundColor: "#D42D66",
-                filter: "drop-shadow(0 4px 8px rgba(212,45,102,0.3))"
-              }}
-            >
-              <Share2 className="w-4 h-4" />
-              <span className="tracking-wider text-sm">Share</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Actividad reciente */}
-        <div className="bg-white/25 backdrop-blur-md rounded-2xl p-6 mb-6 border border-white/30">
-          <h3 className="font-bold text-gray-800 mb-4 tracking-wider">Recent Activity</h3>
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all duration-300">
-              <Leaf className="w-5 h-5" style={{ color: "#689610" }} />
-              <div className="flex-1">
-                <div className="font-medium text-gray-800 text-sm tracking-wider">Contribution</div>
-                <div className="text-xs text-gray-600 font-light">2 days ago</div>
-              </div>
-              <span className="text-xs text-gray-500 font-medium">5.2kg CO₂</span>
-            </div>
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all duration-300">
-              <Package className="w-5 h-5" style={{ color: "#F47802" }} />
-              <div className="flex-1">
-                <div className="font-medium text-gray-800 text-sm tracking-wider">Sale</div>
-                <div className="text-xs text-gray-600 font-light">1 week ago</div>
-              </div>
-              <span className="text-xs text-gray-500 font-medium">3.1kg CO₂</span>
-            </div>
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all duration-300">
-              <ShoppingBag className="w-5 h-5" style={{ color: "#3E88FF" }} />
-              <div className="flex-1">
-                <div className="font-medium text-gray-800 text-sm tracking-wider">Purchase</div>
-                <div className="text-xs text-gray-600 font-light">2 weeks ago</div>
-              </div>
-              <span className="text-xs text-gray-500 font-medium">2.8kg CO₂</span>
+                Share
+              </button>
             </div>
           </div>
         </div>
+
+        {/* Share modal */}
+        <ShareModal />
       </div>
-
-      <BottomNavigationMenu />
     </div>
   );
 } 

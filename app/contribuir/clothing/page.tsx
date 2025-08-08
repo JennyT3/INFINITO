@@ -54,11 +54,7 @@ export default function ContributeClothingPage() {
 
   const handleMethodSelect = (method: string) => {
     setSelectedMethod(method);
-    if (method === "donate") {
-      router.push("/profile/passport");
-    } else if (method === "sell") {
-      router.push("/profile/sell-products");
-    }
+    setCurrentStep("pickup");
   };
 
   const handlePickupPointSelect = (index: number) => {
@@ -77,7 +73,13 @@ export default function ContributeClothingPage() {
       estado: "pending"
     };
     
-    await handleCreateContribution(payload);
+    if (selectedMethod === "donate") {
+      router.push("/profile/passport");
+    } else if (selectedMethod === "sell") {
+      router.push("/profile/sell-products");
+    } else {
+      await handleCreateContribution(payload);
+    }
   };
 
   const goBack = () => {
@@ -89,68 +91,57 @@ export default function ContributeClothingPage() {
     }
   };
 
-  // Step 1: Start
+  // Step 1: Start - Select Pickup Point
   if (currentStep === "start") {
     return (
       <InfinitoLayout
-        title="Contribute Clothes"
-        subtitle="Choose how you want to contribute"
+        title="Select Pickup Point"
+        subtitle="Choose where to deliver your clothes"
         showHeader={true}
         showBackButton={true}
         showBottomMenu={true}
         showLogo={true}
         userName="User"
       >
-        <div className="min-h-screen bg-[#EDE4DA] bg-[url('/fondo.png')] bg-cover bg-center flex flex-col items-center justify-center py-6 relative overflow-y-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-xl">
-            {/* Donate Card */}
-            <div className="group bg-white/25 backdrop-blur-md border border-white/30 rounded-xl p-6 flex flex-col items-center justify-center shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 relative overflow-hidden" style={{ filter: 'drop-shadow(0 8px 24px #68961022)' }}>
-              <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-3 border border-white/40" style={{ backgroundColor: '#689610' }}>
-                <Heart className="w-7 h-7 text-white" />
-              </div>
-              <h2 className="font-bold text-lg text-gray-800 mb-2">Donate for free</h2>
-              <p className="text-gray-600 text-xs mb-4 text-center">Free for those in need</p>
-              <button
-                onClick={() => handleMethodSelect("donate")}
-                className="mt-auto px-6 py-2 rounded-lg font-bold text-white shadow-lg bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 transition-all text-sm tracking-wide"
+        <div className="min-h-screen bg-[#EDE4DA] bg-[url('/fondo.png')] bg-cover bg-center p-4 pb-24">
+          <div className="max-w-md mx-auto space-y-4">
+            {pickupPoints.map((point, index) => (
+              <div
+                key={index}
+                onClick={() => handlePickupPointSelect(index)}
+                className={`bg-white/80 backdrop-blur-md border-2 rounded-xl p-4 cursor-pointer transition-all duration-300 hover:shadow-lg ${
+                  selectedPickupPoint === index 
+                    ? 'border-[#689610] shadow-lg scale-105' 
+                    : 'border-gray-200 hover:border-[#689610]/50'
+                }`}
               >
-                Donate
-              </button>
-            </div>
-
-            {/* Sell Card */}
-            <div className="group bg-white/25 backdrop-blur-md border border-white/30 rounded-xl p-6 flex flex-col items-center justify-center shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 relative overflow-hidden" style={{ filter: 'drop-shadow(0 8px 24px #F4780222)' }}>
-              <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-3 border border-white/40" style={{ backgroundColor: '#F47802' }}>
-                <Package className="w-7 h-7 text-white" />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{point.flag}</span>
+                    <div>
+                      <h3 className="font-semibold text-gray-800">{point.name}</h3>
+                      <p className="text-sm text-gray-600">{point.country}</p>
+                    </div>
+                  </div>
+                  {selectedPickupPoint === index && (
+                    <CheckCircle2 className="w-6 h-6 text-[#689610]" />
+                  )}
+                </div>
               </div>
-              <h2 className="font-bold text-lg text-gray-800 mb-2">Sell (€2/item)</h2>
-              <p className="text-gray-600 text-xs mb-4 text-center">€1 for you, €1 for INFINITO</p>
-              <button
-                onClick={() => handleMethodSelect("sell")}
-                className="mt-auto px-6 py-2 rounded-lg font-bold text-white shadow-lg bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 transition-all text-sm tracking-wide"
-              >
-                Sell
-              </button>
-            </div>
-          </div>
+            ))}
 
-          {/* Tech visual element */}
-          <div className="flex items-center gap-3 mt-8 justify-center">
-            <MapPin className="w-6 h-6 text-[#689610] opacity-60 animate-pulse" />
-            <span className="text-gray-500 text-sm">All actions are certified and traceable</span>
+            <button
+              onClick={() => setCurrentStep("pickup")}
+              disabled={selectedPickupPoint === null}
+              className={`w-full py-4 rounded-xl font-bold shadow transition-all ${
+                selectedPickupPoint !== null
+                  ? 'bg-orange-500 text-white hover:bg-orange-600' 
+                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              }`}
+            >
+              Continue
+            </button>
           </div>
-
-          {/* Floating elements */}
-          <div className="absolute top-1/2 right-6 w-3 h-3 rounded-full opacity-35 animate-pulse delay-500" style={{ backgroundColor: "#F47802" }}></div>
-          <div className="absolute bottom-1/3 left-4 w-2 h-2 rounded-full opacity-30 animate-pulse delay-700" style={{ backgroundColor: "#D42D66" }}></div>
-          <BottomNavigationMenu />
-          <style jsx>{`
-            @keyframes animate-fade-in {
-              0% { opacity: 0; transform: translateY(24px); }
-              100% { opacity: 1; transform: translateY(0); }
-            }
-            .animate-fade-in { animation: animate-fade-in 0.6s cubic-bezier(.4,0,.2,1) both; }
-          `}</style>
         </div>
       </InfinitoLayout>
     );

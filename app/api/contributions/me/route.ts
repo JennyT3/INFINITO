@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authConfig as authOptions } from '@/lib/auth-config';
 import { createUnauthorizedError, createSuccessResponse, handleAPIError } from '@/lib/api-error-handler';
 import logger from '@/lib/logger';
 

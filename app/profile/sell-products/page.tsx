@@ -60,17 +60,7 @@ export default function SellProductsPage() {
 					className="bg-white/25 backdrop-blur-md rounded-2xl p-6 border border-white/30 shadow-xl animate-float-card"
 					style={{ filter: "drop-shadow(0 8px 16px rgba(67,178,210,0.12))" }}
 				>
-					{/* Si no hay tracking, mostrar input temporal */}
-					{!tracking ? (
-						<div className="mb-4">
-							<label className="block mb-2 font-semibold">Contribution Code (tracking):</label>
-							<input type="text" value={tracking} onChange={e => setTracking(e.target.value)} className="p-2 border rounded w-full" placeholder="INF_..." />
-							<p className="text-xs text-gray-500 mt-1">Paste the code generated when you created your contribution.</p>
-						</div>
-					) : null}
-					{tracking && (
-						<SellSectionWithAI tracking={tracking} />
-					)}
+					<SellSectionWithAI tracking={tracking} />
 				</div>
 			</div>
 

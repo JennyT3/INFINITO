@@ -14,7 +14,7 @@ const translations = {
 };
 
 const links = [
-  { href: '/profile/impact-passport', icon: Award, key: 'passport' },
+  { href: '/profile/passport', icon: Award, key: 'passport' },
   { href: '/profile/contribution-history', icon: BookOpen, key: 'sales' },
   { href: '/profile/payment-methods', icon: CreditCard, key: 'payment' },
   { href: '/profile/my-reviews', icon: Star, key: 'reviews' },

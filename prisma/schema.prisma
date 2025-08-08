@@ -8,18 +8,12 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// CURRENT: SQLite (development only)
+// PRODUCTION: PostgreSQL configuration
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL") // For migrations
 }
-
-// PRODUCTION: PostgreSQL configuration (uncomment for production)
-// datasource db {
-//   provider = "postgresql"
-//   url      = env("DATABASE_URL")
-//   shadowDatabaseUrl = env("SHADOW_DATABASE_URL") // For migrations
-// }
 
 model PickupRequest {
   id        Int      @id @default(autoincrement())
