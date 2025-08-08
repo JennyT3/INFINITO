@@ -21,28 +21,24 @@ export default function ContribuirPage() {
 			title: 'Clothing',
 			icon: Shirt,
 			gradient: "from-pink-500 to-rose-500",
-			cta: true,
 			link: "/contribuir/clothing"
 		},
 		{
 			title: 'Art',
 			icon: ArtIcon,
 			gradient: "from-purple-500 to-pink-400",
-			cta: false,
 			link: "/contribuir/art"
 		},
 		{
 			title: 'Recycle',
 			icon: RefreshCw,
 			gradient: "from-green-500 to-blue-500",
-			cta: false,
 			link: "/contribuir/recycle"
 		},
 		{
 			title: 'Receive',
 			icon: Gift,
 			gradient: "from-blue-500 to-cyan-400",
-			cta: false,
 			link: "/contribuir/receive"
 		}
 	];
@@ -95,14 +91,13 @@ export default function ContribuirPage() {
 							onClick={() => router.push(btn.link)}
 							onMouseEnter={() => setSelected(idx)}
 							onMouseLeave={() => setSelected(null)}
-							className={`group relative overflow-hidden flex flex-col items-center justify-center shadow-xl border-2 transition-all duration-300 rounded-2xl bg-[url('/fondo.png')] bg-cover bg-center ${btn.cta ? 'ring-4 ring-[#43B2D2] border-[#43B2D2] scale-105 animate-pulse-slow' : 'border-white/30'} ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'} animate-fade-in`}
-							style={{ minWidth: btn.cta ? BUTTON_SIZE * 1.15 : BUTTON_SIZE, minHeight: btn.cta ? BUTTON_SIZE * 1.15 : BUTTON_SIZE, boxShadow: btn.cta ? '0 0 0 6px #43B2D222' : '0 2px 12px 0 rgba(0,0,0,0.08)', zIndex: 1, animationDelay: `${idx * 120}ms` }}
+							className={`group relative overflow-hidden flex flex-col items-center justify-center shadow-xl border-2 transition-all duration-300 rounded-2xl bg-[url('/fondo.png')] bg-cover bg-center border-white/30 hover:border-[#43B2D2] hover:scale-105 focus:scale-105 focus:border-[#43B2D2] ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'} animate-fade-in`}
+							style={{ minWidth: BUTTON_SIZE, minHeight: BUTTON_SIZE, boxShadow: '0 2px 12px 0 rgba(0,0,0,0.08)', zIndex: 1, animationDelay: `${idx * 120}ms` }}
 						>
-							<div className={`w-16 h-16 rounded-xl flex items-center justify-center mb-2 border-2 ${btn.cta ? 'border-[#43B2D2] bg-cyan-400/80' : 'border-white/40'} bg-gradient-to-br ${btn.gradient} shadow-lg group-hover:scale-110 group-active:scale-95 transition-transform duration-300`}>
+							<div className={`w-16 h-16 rounded-xl flex items-center justify-center mb-2 border-2 border-white/40 bg-gradient-to-br ${btn.gradient} shadow-lg group-hover:scale-110 group-active:scale-95 transition-transform duration-300`}>
 								<btn.icon className="w-9 h-9 text-white drop-shadow" />
 							</div>
 							<span className="text-lg font-bold text-gray-800 tracking-wide font-raleway text-center drop-shadow group-hover:text-[#43B2D2] transition-colors duration-300">{btn.title}</span>
-							{/* Ripple efecto hover */}
 							<span className="absolute inset-0 pointer-events-none group-hover:bg-white/10 group-active:bg-white/20 transition-all duration-300 rounded-2xl" />
 						</button>
 					))}

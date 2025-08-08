@@ -43,6 +43,8 @@ model Contribution {
   estado       String
   fecha        DateTime @default(now())
   detalles     String?
+  decision     String?  // Nueva: donar, vender, etc.
+  pickupPoint  String?  // Nuevo: punto de recogida si aplica
   
   // Tracking states - Seguimiento: Entregado → Verificado → Certificado disponible
   trackingState String  @default("pendiente") // "entregado", "verificado", "certificado_disponible"
@@ -94,6 +96,7 @@ model Contribution {
 
 model Product {
   id           Int      @id @default(autoincrement())
+  tracking     String   // Código de contribución asociado (INF_...)
   name         String
   garmentType  String
   gender       String

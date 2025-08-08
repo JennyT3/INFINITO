@@ -83,7 +83,7 @@ export default function ReceiveClothesFlowPage() {
   // Paso 3: Explorar ropa
   if (currentStep === "browse") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-100 p-4">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-100 p-4 overflow-y-auto">
         <div className="max-w-sm mx-auto">
           <div className="flex items-center mb-6">
             <button onClick={goBack} className="mr-3 p-2 hover:bg-gray-100 rounded-lg">
@@ -115,7 +115,7 @@ export default function ReceiveClothesFlowPage() {
   // Paso 4: Solicitar
   if (currentStep === "request") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-100 p-4">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-100 p-4 overflow-y-auto">
         <div className="max-w-sm mx-auto">
           <div className="flex items-center mb-6">
             <button onClick={goBack} className="mr-3 p-2 hover:bg-gray-100 rounded-lg">
@@ -140,7 +140,7 @@ export default function ReceiveClothesFlowPage() {
   // Paso 5: Confirmación
   if (currentStep === "confirmation") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-100 p-4">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-100 p-4 overflow-y-auto">
         <div className="max-w-sm mx-auto">
           <div className="text-center mb-6">
             <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -166,7 +166,7 @@ export default function ReceiveClothesFlowPage() {
   // Paso 6: Tracking (placeholder)
   if (currentStep === "tracking") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100 p-4">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100 p-4 overflow-y-auto">
         <div className="max-w-sm mx-auto">
           <div className="flex items-center mb-6">
             <button onClick={goBack} className="mr-3 p-2 hover:bg-gray-100 rounded-lg">

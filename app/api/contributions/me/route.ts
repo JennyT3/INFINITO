@@ -22,7 +22,8 @@ export async function GET(req: NextRequest) {
 		// Verificar autenticación
 		if (!session?.user?.email) {
 			logger.warn('API /me - Unauthorized access attempt', 'API');
-			throw createUnauthorizedError();
+			// Return empty array instead of throwing error for better UX
+			return createSuccessResponse([], 'No authenticated user found');
 		}
 		
 		const userEmail = session.user.email;

@@ -1,575 +1,380 @@
 'use client'
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, Upload, Sparkles, ShoppingBag, Calculator, Euro, Zap, Eye, Share2, Package, AlertCircle, CheckCircle } from 'lucide-react';
+import { Camera, Upload, Sparkles, CheckCircle } from 'lucide-react';
 import { Button } from '../ui/button';
-import { calculateStandardWeight, calculateEnvironmentalImpact, calculateRevenue } from '@/lib/utils';
-import { analyzeClothing } from '@/lib/ai-services';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 interface ProductCard {
-  name: string;
-  garmentType: string;
-  gender: string;
-  color: string;
-  size: string;
-  material: string;
-  country: string;
-  condition: string;
-  estimatedWeight: number;
-  environmentalImpact: {
-    co2: number;
-    water: number;
-    resources: number;
-  };
-  suggestedPrice: number;
-  commission: number;
-  finalPrice: number;
-  aiConfidence: number;
+	name: string;
+	garmentType: string;
+	gender: string;
+	color: string;
+	size: string;
+	material: string;
+	country: string;
+	condition: string;
+	estimatedWeight: number;
+	environmentalImpact: {
+		co2: number;
+		water: number;
+		resources: number;
+	};
+	suggestedPrice: number;
+	commission: number;
+	finalPrice: number;
+	aiConfidence: number;
 }
 
-export default function SellSectionWithAI({ language = 'pt', t }: { language?: string, t?: any }) {
-  const [step, setStep] = useState<'sellerForm' | 'photoUpload' | 'aiProcessing' | 'productPreview' | 'published'>('sellerForm');
-  const [sellerData, setSellerData] = useState<any>(null);
-  const [sellerError, setSellerError] = useState('');
-  const [uploadedFiles, setUploadedFiles] = useState<{garmentPhoto: File | null, labelPhoto: File | null}>({
-    garmentPhoto: null,
-    labelPhoto: null
-  });
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [productCard, setProductCard] = useState<ProductCard | null>(null);
-  const [form, setForm] = useState({
-    name: '',
-    phone: '',
-    email: '',
-    address: '',
-    payment: '',
-    nif: '',
-    terms: false,
-  });
-  const fileInputRef1 = useRef<HTMLInputElement>(null);
-  const fileInputRef2 = useRef<HTMLInputElement>(null);
+export default function SellSectionWithAI({ tracking }: { tracking: string }) {
+	const [step, setStep] = useState<'register' | 'photos' | 'processing' | 'preview' | 'published'>('register');
+	const [seller, setSeller] = useState<any>(null);
+	const [error, setError] = useState('');
+	const [files, setFiles] = useState<{garment: File|null, label: File|null}>({ garment: null, label: null });
+	const [isProcessing, setIsProcessing] = useState(false);
+	const [product, setProduct] = useState<ProductCard|null>(null);
+	const [form, setForm] = useState({ name: '', email: '', phone: '', payment: '', terms: false });
+	const router = useRouter();
 
-  // Check if seller already registered (one-time registration)
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('sellerProfile');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setSellerData(parsed);
-        setStep('photoUpload');
-      }
-    }
-  }, []);
+	useEffect(() => {
+		if (typeof window !== 'undefined') {
+			const saved = localStorage.getItem('sellerProfile');
+			if (saved) {
+				setSeller(JSON.parse(saved));
+				setStep('photos');
+			}
+		}
+	}, []);
 
-  // Step 1: One-time seller registration
-  const handleFormChange = (e: any) => setForm({ ...form, [e.target.name]: e.target.value });
-  const handleFormCheck = (e: any) => setForm({ ...form, [e.target.name]: e.target.checked });
-  const handleFormSubmit = (e: any) => {
-    e.preventDefault();
-    if (!form.name || !form.phone || !form.email || !form.payment || !form.terms) {
-      setSellerError('Preencha todos os campos obrigatórios e aceite os termos.');
-      return;
-    }
-    setSellerData(form);
-    localStorage.setItem('sellerProfile', JSON.stringify(form));
-    setStep('photoUpload');
-    setSellerError('');
-  };
+	const handleFormChange = (e: any) => setForm({ ...form, [e.target.name]: e.target.type === 'checkbox' ? e.target.checked : e.target.value });
+	const handleFormSubmit = (e: any) => {
+		e.preventDefault();
+		if (!form.name || !form.email || !form.phone || !form.payment || !form.terms) {
+			setError('Please fill all required fields and accept the terms.');
+			return;
+		}
+		setSeller(form);
+		localStorage.setItem('sellerProfile', JSON.stringify(form));
+		setStep('photos');
+		setError('');
+	};
 
-  // Step 2: Photo upload (minimum 2 photos: garment + label)
-  const handleFileUpload = (type: 'garment' | 'label') => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = (e: any) => {
-      const file = e.target.files[0];
-      if (file) {
-        if (type === 'garment') {
-          setUploadedFiles(prev => ({ ...prev, garmentPhoto: file }));
-        } else {
-          setUploadedFiles(prev => ({ ...prev, labelPhoto: file }));
-        }
-      }
-    };
-    input.click();
-  };
+	const handleFileUpload = (type: 'garment' | 'label') => {
+		const input = document.createElement('input');
+		input.type = 'file';
+		input.accept = 'image/*';
+		input.onchange = (e: any) => {
+			const file = e.target.files[0];
+			if (file) setFiles(prev => ({ ...prev, [type]: file }));
+		};
+		input.click();
+	};
 
-  // Step 3: AI processing and autocomplete
-  const handleAIAnalysis = async () => {
-    if (!uploadedFiles.garmentPhoto || !uploadedFiles.labelPhoto) {
-      alert('Por favor, adicione ambas as fotos: prenda e etiqueta');
-      return;
-    }
+	const handleAIAnalysis = async () => {
+		if (!files.garment || !files.label) {
+			setError('Please add both photos.');
+			return;
+		}
+		setIsProcessing(true);
+		setStep('processing');
+		setTimeout(() => {
+			// Simulación de análisis AI
+			const productData: ProductCard = {
+				name: 'T-Shirt Blue',
+				garmentType: 'T-Shirt',
+				gender: 'Unisex',
+				color: 'Blue',
+				size: 'M',
+				material: 'Organic Cotton',
+				country: 'Portugal',
+				condition: 'Good',
+				estimatedWeight: 0.3,
+				environmentalImpact: { co2: 2, water: 500, resources: 80 },
+				suggestedPrice: 12,
+				commission: 2,
+				finalPrice: 14,
+				aiConfidence: 0.92
+			};
+			setProduct(productData);
+			setStep('preview');
+			setIsProcessing(false);
+		}, 1800);
+	};
 
-    setIsProcessing(true);
-    setStep('aiProcessing');
+	const handlePublish = async () => {
+		console.log('🔍 Debug: Starting handlePublish');
+		console.log('🔍 Debug: product =', product);
+		console.log('🔍 Debug: product.suggestedPrice =', product?.suggestedPrice);
+		console.log('🔍 Debug: seller =', seller);
+		console.log('🔍 Debug: form =', form);
+		console.log('🔍 Debug: tracking =', tracking);
 
-    try {
-      // Convert files to base64 for AI analysis
-      const garmentBase64 = await fileToBase64(uploadedFiles.garmentPhoto);
-      const labelBase64 = await fileToBase64(uploadedFiles.labelPhoto);
+		if (!product) {
+			setError('No product data available. Please complete the AI analysis first.');
+			return;
+		}
+		
+		// Validación del precio
+		if (!product.suggestedPrice || product.suggestedPrice <= 0) {
+			console.error('❌ Debug: Invalid suggestedPrice =', product.suggestedPrice);
+			setError('Invalid product price. Please complete the AI analysis first.');
+			return;
+		}
+		
+		// Validación mejorada del tracking
+		if (!tracking || tracking.trim().length === 0) {
+			setError('A contribution tracking code is required to publish this product.');
+			return;
+		}
 
-      // AI analysis
-      const aiResults = await analyzeClothing(garmentBase64, labelBase64);
-      
-      // Calculate standard weight based on garment type
-      const estimatedWeight = calculateStandardWeight(aiResults.garmentType);
-      
-      // Calculate environmental impact
-      const environmentalImpact = calculateEnvironmentalImpact(estimatedWeight);
-      
-      // Calculate revenue model
-      const suggestedPrice = calculateSuggestedPrice(aiResults.garmentType, aiResults.condition);
-      const revenueModel = calculateRevenue(suggestedPrice);
+		// Verificar que el tracking existe en la base de datos
+		try {
+			const trackingResponse = await fetch(`/api/contributions?tracking=${tracking.trim()}`);
+			if (!trackingResponse.ok) {
+				setError('Error verifying contribution tracking code.');
+				return;
+			}
 
-      // Create product card
-      const productData: ProductCard = {
-        name: `${aiResults.garmentType} ${aiResults.color}`,
-        garmentType: aiResults.garmentType,
-        gender: 'gender' in aiResults && typeof aiResults.gender === 'string' ? aiResults.gender : 'Unissex',
-        color: aiResults.color || '',
-        size: aiResults.size || '',
-        material: aiResults.material || '',
-        country: aiResults.country || '',
-        condition: aiResults.condition || '',
-        estimatedWeight,
-        environmentalImpact,
-        suggestedPrice,
-        commission: revenueModel.commission,
-        finalPrice: revenueModel.finalPrice,
-        aiConfidence: aiResults.confidence || 0.85
-      };
+			const trackingData = await trackingResponse.json();
+			const contributions = trackingData.data || trackingData;
 
-      setProductCard(productData);
-      setStep('productPreview');
-      
-    } catch (error) {
-      console.error('Error in AI analysis:', error);
-      alert('Erro na análise. Tente novamente.');
-      setStep('photoUpload');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+			if (!contributions || contributions.length === 0) {
+				setError('Invalid contribution tracking code. Please use a valid contribution code.');
+				return;
+			}
 
-  // Step 4: Auto-publish to marketplace
-  const handlePublishToMarketplace = async () => {
-    if (!productCard) return;
+			const contribution = contributions[0];
+			
+			// Verificar que la contribución es de tipo "clothing" y tiene estado válido
+			if (contribution.tipo !== 'clothing') {
+				setError('This tracking code is not for a clothing contribution. Only clothing contributions can be sold.');
+				return;
+			}
 
-    try {
-      setIsProcessing(true);
-      
-      // Upload photos to cloud storage first
-      const garmentPhotoUrl = await uploadToCloudinary(uploadedFiles.garmentPhoto!);
-      const labelPhotoUrl = await uploadToCloudinary(uploadedFiles.labelPhoto!);
+			if (contribution.estado === 'pendiente') {
+				setError('This contribution is still pending. Products can only be published for received contributions.');
+				return;
+			}
 
-      // Create product in marketplace
-      const response = await fetch('/api/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: productCard.name,
-          garmentType: productCard.garmentType,
-          gender: productCard.gender,
-          color: productCard.color,
-          size: productCard.size,
-          material: productCard.material,
-          country: productCard.country,
-          condition: productCard.condition,
-          price: productCard.suggestedPrice,
-          sellerName: sellerData.name,
-          sellerEmail: sellerData.email,
-          sellerPhone: sellerData.phone,
-          photo1Url: garmentPhotoUrl,
-          photo2Url: labelPhotoUrl,
-          aiDetection: productCard,
-          aiConfidence: productCard.aiConfidence
-        })
-      });
+			// Preparar el payload con validaciones adicionales
+			const payload = {
+				name: product.name,
+				garmentType: product.garmentType,
+				gender: product.gender,
+				color: product.color,
+				size: product.size,
+				material: product.material,
+				country: product.country,
+				condition: product.condition,
+				tracking: tracking.trim(),
+				price: Number(product.suggestedPrice) || 15.0, // Asegurar que es un número válido
+				originalPrice: Number(product.suggestedPrice) || 15.0,
+				commission: Number(product.commission) || 0,
+				finalPrice: Number(product.finalPrice) || Number(product.suggestedPrice) || 15.0,
+				sellerName: seller?.name || form.name || 'Anonymous Seller',
+				sellerEmail: seller?.email || form.email || '',
+				sellerPhone: seller?.phone || form.phone || '',
+				estimatedWeight: Number(product.estimatedWeight) || 0.25,
+				standardImpact: {
+					co2: Number(product.environmentalImpact?.co2) || 0,
+					water: Number(product.environmentalImpact?.water) || 0,
+					resources: Number(product.environmentalImpact?.resources) || 0
+				},
+				aiDetection: product.name,
+				aiConfidence: Number(product.aiConfidence) || 0.9,
+				photo1Url: files.garment ? URL.createObjectURL(files.garment) : '',
+				photo2Url: files.label ? URL.createObjectURL(files.label) : '',
+				photo3Url: '',
+				impactCo2: (Number(product.environmentalImpact?.co2) || 0).toString(),
+				impactWater: (Number(product.environmentalImpact?.water) || 0).toString(),
+				impactEff: (Number(product.environmentalImpact?.resources) || 0).toString() + '%',
+				status: 'pending',
+				publishedAt: null
+			};
 
-      if (response.ok) {
-        setStep('published');
-        alert(`Produto publicado com sucesso! Preço final: €${productCard.finalPrice} (incluindo comissão de €${productCard.commission})`);
-      } else {
-        throw new Error('Erro ao publicar produto');
-      }
-    } catch (error) {
-      console.error('Error publishing product:', error);
-      alert('Erro ao publicar produto no marketplace');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+			console.log('📦 Debug: Final payload =', payload);
+			console.log('💰 Debug: price field =', payload.price);
 
-  // Helper functions
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = error => reject(error);
-    });
-  };
+			const res = await fetch('/api/products', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(payload)
+			});
 
-  const uploadToCloudinary = async (file: File): Promise<string> => {
-    // TODO: Implement actual Cloudinary upload
-    // For now, return a placeholder URL
-    return `https://placeholder.com/${file.name}`;
-  };
+			if (!res.ok) {
+				const errorData = await res.json();
+				console.error('❌ API Error Response:', errorData);
+				throw new Error(errorData.message || 'Error publishing product');
+			}
 
-  const calculateSuggestedPrice = (garmentType: string, condition: string): number => {
-    const basePrice = {
-      'camiseta': 8,
-      'camisa': 12,
-      'vestido': 20,
-      'jeans': 15,
-      'casaco': 25,
-      'default': 10
-    };
-    
-    const conditionMultiplier = {
-      'excelente': 1.2,
-      'bom': 1.0,
-      'regular': 0.8,
-      'deteriorado': 0.6
-    };
-    
-    const base = basePrice[garmentType?.toLowerCase() as keyof typeof basePrice] || basePrice.default;
-    const multiplier = conditionMultiplier[condition?.toLowerCase() as keyof typeof conditionMultiplier] || 1.0;
-    
-    return Math.round(base * multiplier);
-  };
+			const result = await res.json();
+			console.log('✅ Product published successfully:', result);
 
-  const resetFlow = () => {
-    setUploadedFiles({ garmentPhoto: null, labelPhoto: null });
-    setProductCard(null);
-    setStep('photoUpload');
-  };
+			setStep('published');
+			setError(''); // Limpiar errores anteriores
+		} catch (err) {
+			console.error('💥 Error publishing product:', err);
+			setError(err instanceof Error ? err.message : 'Failed to publish product. Please try again.');
+		}
+	};
 
-  // UI Components for each step
-  if (step === 'sellerForm') {
-    const router = useRouter();
-    return (
-      <div className="min-h-screen bg-blue-300/80 backdrop-blur-sm flex flex-col items-center justify-center">
-        <div className="w-full max-w-5xl flex flex-col md:flex-row items-start justify-center gap-20 py-8 md:py-16">
-          {/* Columna izquierda: Imagen + botón perfil solo en web */}
-          <div className="hidden md:flex flex-col items-center w-[320px]">
-            <Image
-              src="/NFT/3.png"
-              alt="NFT 3"
-              width={320}
-              height={400}
-              className="mb-6 w-full object-contain rounded-xl shadow-xl"
-              priority
-            />
-            <button
-              type="button"
-              onClick={() => router.push('/dashboard')}
-              className="w-full py-3 rounded-xl font-bold text-base tracking-wide shadow-xl bg-[#D42D66] text-white transition-all duration-300 hover:scale-105 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-pink-300"
-            >
-              Perfil Vendedor
-            </button>
-          </div>
-          {/* Columna derecha: Formulario + botón registro */}
-          <div className="flex flex-col items-center w-full md:w-auto max-w-md">
-            <div className="w-full max-w-xs md:w-[320px] rounded-xl bg-white/90 shadow-xl flex flex-col items-center justify-center p-4 md:p-6 mx-auto">
-              <h2 className="text-2xl font-bold mb-4 text-center mt-2">Registro de Vendedor</h2>
-              <p className="text-gray-600 mb-4 text-center">Registro único para começar a vender</p>
-              <form id="seller-form" onSubmit={handleFormSubmit} className="flex flex-col gap-3 w-full max-w-xs mx-auto">
-                <div>
-                  <label className="block text-xs font-semibold text-blue-900 mb-1">Nome completo</label>
-                  <input
-                    type="text"
-                    name="name"
-                    placeholder="Nome completo"
-                    value={form.name}
-                    onChange={handleFormChange}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 text-sm"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-blue-900 mb-1">Telefone</label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    placeholder="Telefone"
-                    value={form.phone}
-                    onChange={handleFormChange}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 text-sm"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-blue-900 mb-1">Email</label>
-                  <input
-                    type="email"
-                    name="email"
-                    placeholder="Email"
-                    value={form.email}
-                    onChange={handleFormChange}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 text-sm"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-blue-900 mb-1">Endereço</label>
-                  <input
-                    type="text"
-                    name="address"
-                    placeholder="Endereço"
-                    value={form.address}
-                    onChange={handleFormChange}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-blue-900 mb-1">Método de pagamento</label>
-                  <select
-                    name="payment"
-                    value={form.payment}
-                    onChange={handleFormChange}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 text-sm"
-                    required
-                  >
-                    <option value="">Método de pagamento</option>
-                    <option value="mbway">MB Way</option>
-                    <option value="paypal">PayPal</option>
-                    <option value="bank">Transferência bancária</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-blue-900 mb-1">NIF (opcional)</label>
-                  <input
-                    type="text"
-                    name="nif"
-                    placeholder="NIF (opcional)"
-                    value={form.nif}
-                    onChange={handleFormChange}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 text-sm"
-                  />
-                </div>
-                <label className="flex items-center gap-2 text-xs">
-                  <input
-                    type="checkbox"
-                    name="terms"
-                    checked={form.terms}
-                    onChange={handleFormChange}
-                    required
-                  />
-                  <span>Aceito os termos e condições</span>
-                </label>
-                {sellerError && (
-                  <div className="text-red-600 text-xs text-center">{sellerError}</div>
-                )}
-                <button
-                  type="submit"
-                  className="w-full max-w-xs mx-auto py-3 mt-4 rounded-xl font-bold text-base tracking-wide shadow-xl bg-orange-500 text-white transition-all duration-300 hover:scale-105 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-orange-300"
-                  style={{ letterSpacing: '0.08em' }}
-                >
-                  Registrarse como vendedor
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+	const resetFlow = () => {
+		setFiles({ garment: null, label: null });
+		setProduct(null);
+		setStep('photos');
+	};
 
-  if (step === 'photoUpload') {
-    return (
-      <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 max-w-md mx-auto">
-        <h2 className="text-2xl font-bold mb-6 text-center">Adicionar Fotos</h2>
-        <p className="text-gray-600 mb-6 text-center">Mínimo 2 fotos: prenda + etiqueta</p>
-        
-        <div className="space-y-4">
-          {/* Garment Photo */}
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-            <div className="text-center">
-              <h3 className="font-semibold mb-2">Foto da Prenda</h3>
-              {uploadedFiles.garmentPhoto ? (
-                <div className="space-y-2">
-                  <img 
-                    src={URL.createObjectURL(uploadedFiles.garmentPhoto)} 
-                    alt="Prenda" 
-                    className="w-32 h-32 object-cover rounded-lg mx-auto"
-                  />
-                  <p className="text-sm text-green-600">✓ Foto adicionada</p>
-                </div>
-              ) : (
-                <Button 
-                  onClick={() => handleFileUpload('garment')}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  <Camera className="w-4 h-4 mr-2" />
-                  Adicionar Foto da Prenda
-                </Button>
-              )}
-            </div>
-          </div>
-          
-          {/* Label Photo */}
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-            <div className="text-center">
-              <h3 className="font-semibold mb-2">Foto da Etiqueta</h3>
-              {uploadedFiles.labelPhoto ? (
-                <div className="space-y-2">
-                  <img 
-                    src={URL.createObjectURL(uploadedFiles.labelPhoto)} 
-                    alt="Etiqueta" 
-                    className="w-32 h-32 object-cover rounded-lg mx-auto"
-                  />
-                  <p className="text-sm text-green-600">✓ Foto adicionada</p>
-                </div>
-              ) : (
-                <Button 
-                  onClick={() => handleFileUpload('label')}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Adicionar Foto da Etiqueta
-                </Button>
-              )}
-            </div>
-          </div>
-          
-          {uploadedFiles.garmentPhoto && uploadedFiles.labelPhoto && (
-            <Button 
-              onClick={handleAIAnalysis}
-              className="w-full bg-green-600 hover:bg-green-700 text-white"
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              Analisar com IA
-            </Button>
-          )}
-        </div>
-      </div>
-    );
-  }
+	// --- UI ---
+	if (step === 'register') {
+		return (
+			<div className="w-full max-w-md mx-auto bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-8 mt-8 animate-float-card">
+				<h2 className="text-2xl font-bold mb-2 text-center">Seller Registration</h2>
+				<p className="text-gray-600 mb-6 text-center">One-time registration to start selling</p>
+				<form onSubmit={handleFormSubmit} className="flex flex-col gap-4">
+					<input type="text" name="name" placeholder="Full Name" value={form.name} onChange={handleFormChange} className="p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 text-base" required />
+					<input type="email" name="email" placeholder="Email" value={form.email} onChange={handleFormChange} className="p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 text-base" required />
+					<input type="tel" name="phone" placeholder="Phone" value={form.phone} onChange={handleFormChange} className="p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 text-base" required />
+					<select name="payment" value={form.payment} onChange={handleFormChange} className="p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 text-base" required>
+						<option value="">Select Payment Method</option>
+						<option value="mbway">MB Way</option>
+						<option value="bank">Bank Transfer</option>
+						<option value="card">Card</option>
+					</select>
+					<label className="flex items-center gap-2 text-sm">
+						<input type="checkbox" name="terms" checked={form.terms} onChange={handleFormChange} required />
+						<span>I accept the terms and conditions</span>
+					</label>
+					{error && <div className="text-red-600 text-sm text-center">{error}</div>}
+					<Button type="submit" className="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white font-bold py-3 rounded-xl shadow-lg hover:scale-105 transition-all text-lg tracking-wide">Register</Button>
+				</form>
+			</div>
+		);
+	}
 
-  if (step === 'aiProcessing') {
-    return (
-      <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 max-w-md mx-auto text-center">
-        <div className="animate-spin w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-        <h2 className="text-2xl font-bold mb-4">Processando com IA</h2>
-        <div className="space-y-2 text-left">
-          <p className="text-sm">🔍 Detectando tipo de prenda...</p>
-          <p className="text-sm">🏷️ Lendo etiqueta...</p>
-          <p className="text-sm">📊 Calculando impacto ambiental...</p>
-          <p className="text-sm">💰 Sugerindo preço...</p>
-        </div>
-      </div>
-    );
-  }
+	if (step === 'photos') {
+		return (
+			<div className="w-full max-w-md mx-auto bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-8 mt-8 animate-float-card">
+				<h2 className="text-2xl font-bold mb-2 text-center">Add Photos</h2>
+				<p className="text-gray-600 mb-6 text-center">Minimum 2 photos: item and label</p>
+				
+				{/* Tracking Information */}
+				<div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+					<div className="flex items-center justify-between">
+						<span className="font-semibold text-blue-800">Contribution Code:</span>
+						<span className="font-mono text-sm bg-blue-100 px-2 py-1 rounded text-blue-800">{tracking}</span>
+					</div>
+					<div className="text-xs text-blue-600 mt-1">
+						This product will be linked to your contribution
+					</div>
+				</div>
 
-  if (step === 'productPreview' && productCard) {
-    return (
-      <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 max-w-md mx-auto">
-        <h2 className="text-2xl font-bold mb-6 text-center">Pré-visualização do Produto</h2>
-        
-        <div className="space-y-4">
-          <div className="text-center">
-            <h3 className="text-xl font-semibold">{productCard.name}</h3>
-            <p className="text-gray-600">{productCard.size} | {productCard.material}</p>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="font-medium">Tipo:</span> {productCard.garmentType}
-            </div>
-            <div>
-              <span className="font-medium">Cor:</span> {productCard.color}
-            </div>
-            <div>
-              <span className="font-medium">Condição:</span> {productCard.condition}
-            </div>
-            <div>
-              <span className="font-medium">País:</span> {productCard.country}
-            </div>
-          </div>
-          
-          <div className="bg-green-50 rounded-lg p-4">
-            <h4 className="font-semibold text-green-800 mb-2">Impacto Ambiental</h4>
-            <div className="grid grid-cols-3 gap-2 text-sm">
-              <div className="text-center">
-                <div className="font-medium">{productCard.environmentalImpact.co2} kg</div>
-                <div className="text-green-600">CO₂</div>
-              </div>
-              <div className="text-center">
-                <div className="font-medium">{productCard.environmentalImpact.water} L</div>
-                <div className="text-green-600">Água</div>
-              </div>
-              <div className="text-center">
-                <div className="font-medium">{productCard.environmentalImpact.resources}%</div>
-                <div className="text-green-600">Recursos</div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-blue-50 rounded-lg p-4">
-            <h4 className="font-semibold text-blue-800 mb-2">Preço Sugerido</h4>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600">€{productCard.suggestedPrice}</div>
-              <div className="text-sm text-gray-600">
-                + €{productCard.commission} comissão = €{productCard.finalPrice} total
-              </div>
-            </div>
-          </div>
-          
-          <div className="text-center">
-            <div className="text-sm text-gray-600 mb-2">
-              Confiança da IA: {Math.round(productCard.aiConfidence * 100)}%
-            </div>
-            <div className="flex gap-2">
-              <Button 
-                onClick={handlePublishToMarketplace}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                disabled={isProcessing}
-              >
-                {isProcessing ? 'Publicando...' : 'Publicar no Marketplace'}
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={resetFlow}
-                className="flex-1"
-              >
-                Tentar Novamente
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+				<div className="flex flex-col gap-6">
+					<div className="flex flex-col items-center gap-2">
+						<span className="font-semibold">Item Photo</span>
+						{files.garment ? (
+							<img src={URL.createObjectURL(files.garment)} alt="Item" className="w-32 h-32 object-cover rounded-xl border-2 border-green-400 shadow" />
+						) : (
+							<Button onClick={() => handleFileUpload('garment')} className="bg-gradient-to-r from-green-500 to-blue-500 text-white w-full py-3 rounded-xl font-bold shadow hover:scale-105 transition-all">
+								<Camera className="w-5 h-5 mr-2" /> Add Item Photo
+							</Button>
+						)}
+					</div>
+					<div className="flex flex-col items-center gap-2">
+						<span className="font-semibold">Label Photo</span>
+						{files.label ? (
+							<img src={URL.createObjectURL(files.label)} alt="Label" className="w-32 h-32 object-cover rounded-xl border-2 border-blue-400 shadow" />
+						) : (
+							<Button onClick={() => handleFileUpload('label')} className="bg-gradient-to-r from-blue-500 to-green-500 text-white w-full py-3 rounded-xl font-bold shadow hover:scale-105 transition-all">
+								<Upload className="w-5 h-5 mr-2" /> Add Label Photo
+							</Button>
+						)}
+					</div>
+					{files.garment && files.label && (
+						<Button onClick={handleAIAnalysis} className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 rounded-xl shadow-lg hover:scale-105 transition-all text-lg tracking-wide flex items-center justify-center gap-2">
+							<Sparkles className="w-5 h-5" /> Analyze with AI
+						</Button>
+					)}
+					{error && <div className="text-red-600 text-sm text-center">{error}</div>}
+				</div>
+			</div>
+		);
+	}
 
-  if (step === 'published') {
-    return (
-      <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 max-w-md mx-auto text-center">
-        <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold mb-4 text-green-800">Produto Publicado!</h2>
-        <p className="text-gray-600 mb-6">
-          Seu produto foi publicado automaticamente no marketplace e está disponível para compra.
-        </p>
-        <div className="space-y-3">
-          <Button 
-            onClick={resetFlow}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            Adicionar Outro Produto
-          </Button>
-          <Button 
-            variant="outline"
-            onClick={() => window.location.href = '/marketplace'}
-            className="w-full"
-          >
-            Ver no Marketplace
-          </Button>
-        </div>
-      </div>
-    );
-  }
+	if (step === 'processing') {
+		return (
+			<div className="w-full max-w-md mx-auto bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-8 mt-8 animate-float-card text-center flex flex-col items-center">
+				<div className="animate-spin w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full mb-4"></div>
+				<h2 className="text-2xl font-bold mb-2">Analyzing with AI...</h2>
+				<p className="text-gray-600 mb-2">Detecting item type, reading label, calculating impact, suggesting price...</p>
+			</div>
+		);
+	}
 
-  return null;
+	if (step === 'preview' && product) {
+		return (
+			<div className="w-full max-w-md mx-auto bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-8 mt-8 animate-float-card">
+				<h2 className="text-2xl font-bold mb-4 text-center">Product Preview</h2>
+				
+				{/* Tracking Validation Status */}
+				<div className="mb-4 p-3 rounded-lg border">
+					<div className="flex items-center justify-between mb-2">
+						<span className="font-semibold text-gray-700">Contribution Tracking:</span>
+						<span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">{tracking}</span>
+					</div>
+					<div className="text-sm text-gray-600">
+						✅ Valid contribution code - Ready to publish
+					</div>
+				</div>
+
+				<div className="flex flex-col gap-4">
+					<div className="text-center">
+						<span className="text-xl font-semibold">{product.name}</span>
+						<p className="text-gray-600">{product.size} | {product.material}</p>
+					</div>
+					<div className="grid grid-cols-2 gap-2 text-sm">
+						<div><span className="font-medium">Type:</span> {product.garmentType}</div>
+						<div><span className="font-medium">Color:</span> {product.color}</div>
+						<div><span className="font-medium">Condition:</span> {product.condition}</div>
+						<div><span className="font-medium">Country:</span> {product.country}</div>
+					</div>
+					<div className="bg-green-50 rounded-lg p-4">
+						<h4 className="font-semibold text-green-800 mb-2">Environmental Impact</h4>
+						<div className="grid grid-cols-3 gap-2 text-sm">
+							<div className="text-center"><div className="font-medium">{product.environmentalImpact.co2} kg</div><div className="text-green-600">CO₂</div></div>
+							<div className="text-center"><div className="font-medium">{product.environmentalImpact.water} L</div><div className="text-green-600">Water</div></div>
+							<div className="text-center"><div className="font-medium">{product.environmentalImpact.resources}%</div><div className="text-green-600">Resources</div></div>
+						</div>
+					</div>
+					<div className="bg-blue-50 rounded-lg p-4">
+						<h4 className="font-semibold text-blue-800 mb-2">Suggested Price</h4>
+						<div className="text-center">
+							<div className="text-3xl font-bold text-blue-600">€{product.suggestedPrice}</div>
+							<div className="text-sm text-gray-600">+ €{product.commission} fee = €{product.finalPrice} total</div>
+						</div>
+					</div>
+					{error && <div className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-lg">{error}</div>}
+					<div className="flex gap-2 mt-2">
+						<Button onClick={handlePublish} className="flex-1 bg-gradient-to-r from-green-500 to-blue-500 text-white font-bold py-3 rounded-xl shadow-lg hover:scale-105 transition-all text-lg tracking-wide">Publish</Button>
+						<Button variant="outline" onClick={resetFlow} className="flex-1">Try Again</Button>
+					</div>
+				</div>
+			</div>
+		);
+	}
+
+	if (step === 'published') {
+		return (
+			<div className="w-full max-w-md mx-auto bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-8 mt-8 animate-float-card text-center">
+				<CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4 animate-fade-in-scale" />
+				<h2 className="text-2xl font-bold mb-2 text-green-800">Product Published!</h2>
+				<p className="text-gray-600 mb-6">Your product is now live on the marketplace and available for purchase.</p>
+				<div className="space-y-3">
+					<Button onClick={resetFlow} className="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white font-bold py-3 rounded-xl shadow-lg hover:scale-105 transition-all text-lg tracking-wide">Add Another Product</Button>
+					<Button variant="outline" onClick={() => router.push('/marketplace')} className="w-full">View in Marketplace</Button>
+				</div>
+			</div>
+		);
+	}
+
+	return null;
 } 

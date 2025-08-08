@@ -62,7 +62,7 @@ export default function InfinitoLayout({
 
 			{/* Container principal con fondo INFINITO */}
 			<div 
-				className={`min-h-screen pb-20 relative overflow-hidden font-raleway infinito-bg-effects ${className}`}
+				className={`min-h-screen flex flex-col pb-20 relative overflow-y-auto font-raleway infinito-bg-effects ${className}`}
 				style={{
 					backgroundColor: "#EDE4DA",
 					backgroundImage: "url('/fondo.png'), radial-gradient(circle at 20% 50%, rgba(120, 119, 108, 0.1) 1px, transparent 1px), radial-gradient(circle at 80% 20%, rgba(120, 119, 108, 0.1) 1px, transparent 1px)",
@@ -90,7 +90,7 @@ export default function InfinitoLayout({
 				)}
 
 				{/* Contenido principal */}
-				<div className="infinito-container">
+				<div className="infinito-container flex-1 w-full flex flex-col h-full">
 					{/* Elimina el renderizado duplicado del título y subtítulo aquí */}
 					{/* {title && (
 						<div className="text-center mb-8">

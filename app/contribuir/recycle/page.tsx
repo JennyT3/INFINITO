@@ -43,19 +43,28 @@ export default function RecycleFlowPage() {
 	const router = useRouter();
 	const [search, setSearch] = useState("");
 	const [selected, setSelected] = useState<number | null>(null);
+
+	const goBack = () => {
+		router.back();
+	};
+
+	const BackButton = () => {
+		return (
+			<button type="button" onClick={goBack} style={{background: 'none', border: 'none', cursor: 'pointer'}}>Back</button>
+		);
+	};
+
 	return (
 		<div className="min-h-screen font-raleway flex flex-col justify-between bg-[#EDE4DA] relative" style={{backgroundImage: "url('/fondo.png')", backgroundRepeat: 'repeat', backgroundSize: 'cover'}}>
 			{/* Top bar: back and notifications */}
 			<div className="flex items-center justify-between w-full max-w-4xl mx-auto px-4 pt-4">
-				<button onClick={() => router.push('/contribuir')} className="w-10 h-10 bg-white/90 rounded-2xl flex items-center justify-center shadow border border-gray-200">
-					<ArrowLeft className="w-5 h-5 text-gray-600" />
-				</button>
+				<BackButton />
 				<button className="w-10 h-10 bg-black rounded-full flex items-center justify-center shadow border border-gray-900">
 					<Bell className="w-5 h-5 text-white" />
 				</button>
 			</div>
 			{/* Main content */}
-			<div className="flex flex-1 flex-col items-center justify-center w-full max-w-6xl mx-auto px-4 gap-12 pt-4 pb-32">
+			<div className="flex flex-1 flex-col items-center justify-center w-full max-w-6xl mx-auto px-4 gap-12 pt-4 pb-32 overflow-y-auto">
 				{/* Título y barra de búsqueda siempre centralizados */}
 				<div className="w-full flex flex-col items-center justify-center mb-8">
 					<h1 className="font-extrabold text-3xl text-gray-800 mb-2 text-center">Recicla e transforma!</h1>

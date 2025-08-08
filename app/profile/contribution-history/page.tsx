@@ -117,13 +117,17 @@ export default function ContributionHistoryPage() {
         
         if (response.ok) {
           const data = await response.json();
-          setContributions(data);
+          // Ensure data is an array
+          const contributionsArray = Array.isArray(data) ? data : (data.contributions || data.data || []);
+          setContributions(contributionsArray);
         } else {
           setError('Erro ao carregar contribuições');
+          setContributions([]);
         }
       } catch (err) {
         console.error('Error loading contributions:', err);
         setError('Erro ao carregar contribuições');
+        setContributions([]);
       } finally {
         setLoading(false);
       }
@@ -153,17 +157,17 @@ export default function ContributionHistoryPage() {
     setShowCertificateGenerator(true);
   };
 
-  const filteredContributions = contributions.filter(contrib => {
+  const filteredContributions = Array.isArray(contributions) ? contributions.filter(contrib => {
     const matchesFilter = filter === 'todos' || contrib.trackingState === filter;
     const matchesSearch = contrib.tracking.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          contrib.tipo.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          contrib.detalles.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesFilter && matchesSearch;
-  });
+  }) : [];
 
-  const totalPoints = contributions.reduce((sum, contrib) => sum + (contrib.points || 0), 0);
-  const totalCO2 = contributions.reduce((sum, contrib) => sum + (contrib.co2Saved || 0), 0);
-  const totalWater = contributions.reduce((sum, contrib) => sum + (contrib.waterSaved || 0), 0);
+  const totalPoints = Array.isArray(contributions) ? contributions.reduce((sum, contrib) => sum + (contrib.points || 0), 0) : 0;
+  const totalCO2 = Array.isArray(contributions) ? contributions.reduce((sum, contrib) => sum + (contrib.co2Saved || 0), 0) : 0;
+  const totalWater = Array.isArray(contributions) ? contributions.reduce((sum, contrib) => sum + (contrib.waterSaved || 0), 0) : 0;
 
   if (loading) {
     return (
@@ -222,7 +226,7 @@ export default function ContributionHistoryPage() {
             />
             <div>
               <h2 className="text-lg font-bold text-gray-800">{userName}</h2>
-              <p className="text-sm text-gray-600">{contributions.length} contribuições</p>
+              <p className="text-sm text-gray-600">{Array.isArray(contributions) ? contributions.length : 0} contribuições</p>
             </div>
           </div>
           

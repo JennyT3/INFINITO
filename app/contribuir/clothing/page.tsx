@@ -28,6 +28,7 @@ export default function ContributeClothingPage() {
   const [pickupAddress, setPickupAddress] = useState("");
   const [pickupWeight, setPickupWeight] = useState("");
   const [pickupDay, setPickupDay] = useState("");
+  const [pickupItems, setPickupItems] = useState("");
   // Estado para el código generado
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [fullBackendResponse, setFullBackendResponse] = useState<any | null>(null);
@@ -83,6 +84,18 @@ export default function ContributeClothingPage() {
         errors.day = "Pickup only on Tuesdays and Thursdays";
       }
     }
+
+    // Validar número de items
+    if (!pickupItems.trim()) {
+      errors.items = "Number of items is required";
+    } else {
+      const items = parseInt(pickupItems);
+      if (isNaN(items) || items <= 0) {
+        errors.items = "Number of items must be a positive number";
+      } else if (items > 100) {
+        errors.items = "Maximum number of items is 100";
+      }
+    }
     
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
@@ -98,98 +111,109 @@ export default function ContributeClothingPage() {
   // Definir la función antes de su uso en el formulario:
   const handleCreateContribution = async (payload: any) => {
     setError(null);
-    const res = await fetch("/api/contributions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    const data = await res.json();
-    if (!data.tracking || data.tracking === "null" || data.tracking === undefined) {
-      setError("No contribution found.");
-      setGeneratedCode(null);
-    } else {
-      setGeneratedCode(data.tracking);
-      setFullBackendResponse(data);
-      setCurrentStep("confirmation");
+    console.log("Creando contribución con payload:", payload);
+    
+    try {
+      const res = await fetch("/api/contributions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      
+      console.log("Respuesta del servidor:", res.status, res.statusText);
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.error("Error del servidor:", errorData);
+        setError(`Error del servidor: ${res.status} - ${errorData.message || 'Error desconocido'}`);
+        return;
+      }
+      
+      const data = await res.json();
+      console.log("Datos de respuesta completos:", JSON.stringify(data, null, 2));
+      
+      // Extraer el código de tracking correctamente
+      const trackingCode = data?.data?.tracking || data?.tracking;
+      console.log("Código de tracking extraído:", trackingCode);
+      
+      if (!trackingCode || trackingCode === "null" || trackingCode === undefined) {
+        console.error("No se pudo extraer el código de tracking de la respuesta:", data);
+        setError("No se pudo generar el código de contribución. Inténtalo de nuevo.");
+        setGeneratedCode(null);
+      } else {
+        // Guardar en localStorage para el flujo de venta
+        localStorage.setItem('contributionTracking', trackingCode);
+        console.log("Código guardado en localStorage:", trackingCode);
+        
+        setGeneratedCode(trackingCode);
+        setFullBackendResponse(data);
+        setCurrentStep("confirmation");
+        console.log("Contribución creada exitosamente, código:", trackingCode);
+      }
+    } catch (error) {
+      console.error("Error al crear contribución:", error);
+      setError("Error de conexión. Verifica tu internet e inténtalo de nuevo.");
     }
   };
 
-  // Dentro del modal de recolha, actualizar el formulario:
+  // Función para manejar el envío del formulario de pickup
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     
-    // Validar formulario
     if (!validatePickupForm()) {
       return;
     }
-    
-    setIsSubmitting(true);
-    setError(null);
-    
-    try {
-      // Recopilar datos del formulario
-      const payload = {
-        tipo: "ropa",
-        metodo: "recolha",
-        nome: `${pickupPhone} - ${pickupAddress}`, // mejorado
-        estado: "Pendente",
-        fecha: new Date().toISOString(),
-        detalles: `Peso: ${pickupWeight}kg, Dia: ${pickupDay}`,
-        totalItems: Number(pickupWeight) || 0,
-        recyclingPercentage: 0,
-        repairPercentage: 0,
-        cotton: 0,
-        polyester: 0,
-        wool: 0,
-        other: 0,
-        co2Saved: 0,
-        waterSaved: 0,
-        naturalResources: 0,
-        aiConfidence: null,
-        methodology: "manual",
-        uncertainty: "±25%",
-        region: "Vila Real",
-        verified: false,
-        imageUrls: null,
-        trackingState: "pendiente",
-        adminUserId: null,
-        classification: null,
-        destination: null,
-        certificateHash: null,
-        certificateDate: null
-      };
 
-      console.log("Enviando payload:", payload);
-      
-      // Enviar al backend
-      const response = await fetch('/api/contributions', {
-        method: 'POST',
+    const pickupPayload = {
+      tipo: "clothing",
+      nome: `${pickupPhone} - ${pickupAddress}`,
+      totalItems: Number(pickupItems) || 0,
+      detalles: `Peso: ${pickupWeight}kg, Dia: ${pickupDay}, Items: ${pickupItems}`,
+      estado: "pending"
+    };
+
+    console.log("Enviando formulario de pickup con payload:", pickupPayload);
+
+    try {
+      const response = await fetch("/api/contributions", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(pickupPayload),
       });
 
-      console.log("Respuesta del servidor:", response);
-      
+      console.log("Respuesta del servidor (pickup):", response.status, response.statusText);
+
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error?.message || 'Error al procesar la solicitud');
+        console.error("Error del servidor (pickup):", errorData);
+        setError(`Error del servidor: ${response.status} - ${errorData.message || 'Error desconocido'}`);
+        return;
       }
 
       const data = await response.json();
-      console.log("Datos recibidos:", data);
+      console.log("Datos de respuesta completos (pickup):", JSON.stringify(data, null, 2));
+      
+      // Extraer el código de tracking correctamente
+      const trackingCode = data?.data?.tracking || data?.tracking || "No disponible";
+      console.log("Código de tracking extraído (pickup):", trackingCode);
+      
+      // Guardar en localStorage para el flujo de venta
+      if (trackingCode && trackingCode !== "No disponible") {
+        localStorage.setItem('contributionTracking', trackingCode);
+        console.log("Código guardado en localStorage (pickup):", trackingCode);
+      }
       
       setFullBackendResponse(data);
-      setGeneratedCode(data?.data?.tracking || "No disponible");
+      setGeneratedCode(trackingCode);
+      console.log("Estado generatedCode actualizado (pickup):", trackingCode);
       setOpenModal(false);
       setCurrentStep("confirmation");
-      
-    } catch (err) {
-      console.error("Error:", err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setIsSubmitting(false);
+    } catch (error) {
+      console.error("Error al enviar formulario de pickup:", error);
+      setError("Error de conexión. Verifica tu internet e inténtalo de nuevo.");
     }
   };
 
@@ -204,125 +228,142 @@ export default function ContributeClothingPage() {
     }
   };
 
+  // Traducción de textos del formulario de recogida a domicilio:
+  const pickupFormLabels = {
+	title: 'Home Pickup',
+	description: 'Home pickup is only available for quantities over 10kg. The INFINITO team will be in Vila Real on Tuesdays and Thursdays, from 9am to 6pm.',
+	phone: 'Phone number',
+	phonePlaceholder: '+351 123 456 789',
+	address: 'Full address',
+	addressPlaceholder: 'Street, number, postal code, city',
+	weight: 'Estimated weight (kg)',
+	weightPlaceholder: 'Minimum 10kg',
+	weightMessage: 'Pickup available for quantities over 10kg',
+	day: 'Desired pickup day',
+	dayPlaceholder: 'dd/mm/yyyy',
+	dayMessage: 'Pickup on Tuesdays and Thursdays, from 9am to 6pm',
+	confirm: 'Confirm Pickup',
+	cancel: 'Cancel',
+	processing: 'Processing...'
+};
+
   // Actualizar el JSX del formulario con validación:
   const renderPickupForm = () => (
     <form className="space-y-4" onSubmit={handleSubmit}>
       <div>
-        <label className="block text-sm font-medium mb-1">{t('phoneNumberLabel')}</label>
-        <input 
-          type="tel" 
-          value={pickupPhone} 
+        <label className="block text-sm font-medium mb-1">Phone number</label>
+        <input
+          type="tel"
+          value={pickupPhone}
           onChange={(e) => {
             setPickupPhone(e.target.value);
             clearFieldError('phone');
           }}
-          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-            validationErrors.phone 
-              ? 'border-red-500 focus:ring-red-500' 
-              : 'border-gray-300 focus:ring-blue-500'
-          }`}
+          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${validationErrors.phone ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'}`}
           placeholder="+351 123 456 789"
         />
         {validationErrors.phone && (
           <p className="text-red-500 text-xs mt-1">{validationErrors.phone}</p>
         )}
       </div>
-
       <div>
-        <label className="block text-sm font-medium mb-1">{t('addressLabel')}</label>
-        <input 
-          type="text" 
-          value={pickupAddress} 
+        <label className="block text-sm font-medium mb-1">Full address</label>
+        <input
+          type="text"
+          value={pickupAddress}
           onChange={(e) => {
             setPickupAddress(e.target.value);
             clearFieldError('address');
           }}
-          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-            validationErrors.address 
-              ? 'border-red-500 focus:ring-red-500' 
-              : 'border-gray-300 focus:ring-blue-500'
-          }`}
-          placeholder={t('addressPlaceholder')}
+          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${validationErrors.address ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'}`}
+          placeholder="Street, number, postal code, city"
         />
         {validationErrors.address && (
           <p className="text-red-500 text-xs mt-1">{validationErrors.address}</p>
         )}
       </div>
-
       <div>
-        <label className="block text-sm font-medium mb-1">{t('estimatedWeightLabel')}</label>
-        <input 
-          type="number" 
-          value={pickupWeight} 
+        <label className="block text-sm font-medium mb-1">Number of items</label>
+        <input
+          type="number"
+          value={pickupItems}
+          onChange={(e) => {
+            setPickupItems(e.target.value);
+            clearFieldError('items');
+          }}
+          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${validationErrors.items ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'}`}
+          placeholder="How many pieces of clothing?"
+          min="1"
+          max="100"
+        />
+        {validationErrors.items && (
+          <p className="text-red-500 text-xs mt-1">{validationErrors.items}</p>
+        )}
+      </div>
+      <div>
+        <label className="block text-sm font-medium mb-1">Estimated weight (kg)</label>
+        <input
+          type="number"
+          value={pickupWeight}
           onChange={(e) => {
             setPickupWeight(e.target.value);
             clearFieldError('weight');
           }}
-          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-            validationErrors.weight 
-              ? 'border-red-500 focus:ring-red-500' 
-              : 'border-gray-300 focus:ring-blue-500'
-          }`}
-          placeholder={t('estimatedWeightPlaceholder')}
+          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${validationErrors.weight ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'}`}
+          placeholder="Minimum 10kg"
           min="10"
           max="100"
         />
         {validationErrors.weight && (
           <p className="text-red-500 text-xs mt-1">{validationErrors.weight}</p>
         )}
-        <p className="text-xs text-gray-500 mt-1">{t('pickupAvailabilityMessage')}</p>
+        <p className="text-xs text-gray-500 mt-1">Pickup available for quantities over 10kg</p>
       </div>
-
       <div>
-        <label className="block text-sm font-medium mb-1">{t('desiredPickupDayLabel')}</label>
-        <input 
-          type="date" 
-          value={pickupDay} 
+        <label className="block text-sm font-medium mb-1">Desired pickup day</label>
+        <input
+          type="date"
+          value={pickupDay}
           onChange={(e) => {
             setPickupDay(e.target.value);
             clearFieldError('day');
           }}
-          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-            validationErrors.day 
-              ? 'border-red-500 focus:ring-red-500' 
-              : 'border-gray-300 focus:ring-blue-500'
-          }`}
+          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${validationErrors.day ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'}`}
           min={new Date().toISOString().split('T')[0]}
+          placeholder="dd/mm/yyyy"
         />
         {validationErrors.day && (
           <p className="text-red-500 text-xs mt-1">{validationErrors.day}</p>
         )}
-        <p className="text-xs text-gray-500 mt-1">{t('pickupDaysMessage')}</p>
+        <p className="text-xs text-gray-500 mt-1">Pickup on Tuesdays and Thursdays, from 9am to 6pm</p>
       </div>
-
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
           <span className="block sm:inline">{error}</span>
         </div>
       )}
-
       <DialogFooter>
         <DialogClose asChild>
-          <button 
-            type="button" 
+          <button
+            type="button"
             className="px-4 py-2 text-gray-600 hover:text-gray-800"
             disabled={isSubmitting}
           >
-            {t('cancelButton')}
+            Cancel
           </button>
         </DialogClose>
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           disabled={isSubmitting}
         >
           {isSubmitting ? (
             <>
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              {t('processingMessage')}
+              Processing...
             </>
           ) : (
-            t('confirmPickupButton')
+            'Confirm Pickup'
           )}
         </button>
       </DialogFooter>
@@ -477,7 +518,7 @@ export default function ContributeClothingPage() {
 
   const BackButton = () => {
     return (
-      <button type="button" onClick={() => router.back()} style={{background: 'none', border: 'none', cursor: 'pointer'}}>Back</button>
+      <button type="button" onClick={goBack} style={{background: 'none', border: 'none', cursor: 'pointer'}}>Back</button>
     );
   };
 
@@ -506,8 +547,7 @@ export default function ContributeClothingPage() {
 						<li className="flex items-center gap-2 text-gray-700"><Sparkles className="w-5 h-5 text-purple-600" /> Exclusive contribution NFT</li>
 						<li className="flex items-center gap-2 text-gray-700"><Heart className="w-5 h-5 text-pink-600" /> Second life for your clothes</li>
 					</ul>
-					<button onClick={() => setCurrentStep("method")}
-						className="mt-auto px-8 py-3 rounded-xl font-bold text-white shadow-lg bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 transition-all text-lg tracking-wide">
+					<button onClick={() => setCurrentStep("method")} className="mt-auto px-8 py-3 rounded-xl font-bold text-white shadow-lg bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 transition-all text-lg tracking-wide">
 						Start Contribution
 					</button>
 				</div>
@@ -533,7 +573,7 @@ export default function ContributeClothingPage() {
 			showLogo={true}
 			userName="User"
 		>
-			<div className="flex flex-col items-center justify-start bg-[#EDE4DA] bg-[url('/fondo.png')] bg-cover bg-center min-h-screen pt-10" style={{ minHeight: 'calc(100vh - 96px)' }}>
+			<div className="flex-1 w-full flex flex-col items-center justify-start pt-10 overflow-y-auto pb-40 bg-[#EDE4DA] bg-[url('/fondo.png')] bg-cover bg-center">
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-2xl mt-0">
 					{/* Card Pickup Point */}
 					<div className="group bg-white/25 backdrop-blur-md border border-white/30 rounded-2xl p-8 flex flex-col items-center justify-center shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 relative overflow-hidden" style={{ filter: 'drop-shadow(0 8px 24px #68961022)' }}>
@@ -568,8 +608,8 @@ export default function ContributeClothingPage() {
 				<Dialog open={openModal} onOpenChange={setOpenModal}>
 					<DialogContent>
 						<DialogHeader>
-							<DialogTitle>{t('homePickupTitle')}</DialogTitle>
-							<DialogDescription>{t('homePickupDescription')}</DialogDescription>
+							<DialogTitle>Home Pickup</DialogTitle>
+							<DialogDescription>Home pickup is only available for quantities over 10kg. The INFINITO team will be in Vila Real on Tuesdays and Thursdays, from 9am to 6pm.</DialogDescription>
 						</DialogHeader>
 						{renderPickupForm()}
 					</DialogContent>
@@ -634,7 +674,26 @@ export default function ContributeClothingPage() {
               </div>
             </div>
             <button
-              onClick={() => selected!==null && setCurrentStep("confirmation")}
+              onClick={async () => {
+                if (selected !== null) {
+                  const points = [
+                    { name: "Vila Real Center", lat: 41.1511, lng: -7.8029 },
+                    { name: "Municipal Library", lat: 41.3086, lng: -7.7461 },
+                    { name: "Municipal Market", lat: 41.3006, lng: -7.7441 }
+                  ];
+                  const selectedPoint = points[selected];
+                  
+                  const payload = {
+                    tipo: "clothing",
+                    nome: `Delivery to ${selectedPoint.name}`,
+                    totalItems: 5, // Default value for map delivery
+                    detalles: `Pickup point: ${selectedPoint.name} (${selectedPoint.lat}, ${selectedPoint.lng})`,
+                    estado: "pending"
+                  };
+                  
+                  await handleCreateContribution(payload);
+                }
+              }}
               disabled={selected===null}
               className={`w-full py-4 rounded-xl font-bold shadow transition-all ${selected!==null ? 'bg-orange-500 text-white hover:bg-orange-600' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
             >
@@ -664,13 +723,15 @@ export default function ContributeClothingPage() {
 						<div className="w-20 h-20 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-fade-in-scale">
 							<CheckCircle2 className="w-10 h-10 text-white" />
 						</div>
-						<p className="text-gray-600">Your contribution has been certified on the blockchain</p>
+						<h2 className="text-xl font-bold text-gray-800 mb-2">Contribution Created Successfully!</h2>
+						<p className="text-gray-600">Your contribution has been registered and certified on the blockchain</p>
 					</div>
 					<div className="bg-white/80 rounded-2xl p-6 mb-6 shadow-lg text-center">
-						<p className="text-sm text-gray-600 mb-2">Contribution Code:</p>
+						<p className="text-sm text-gray-600 mb-2">Your Contribution Code:</p>
 						<p className="text-lg font-mono font-bold text-gray-800 bg-gray-100 p-3 rounded-lg">
 							{(!generatedCode || generatedCode === "null" || generatedCode === undefined) ? "Not available" : generatedCode}
 						</p>
+						<p className="text-xs text-gray-500 mt-2">Save this code for tracking your contribution</p>
 					</div>
 					<button onClick={() => setCurrentStep("decision")}
 						className="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white py-4 rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all duration-300 mb-3">

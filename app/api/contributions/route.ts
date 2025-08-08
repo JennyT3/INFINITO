@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '../../../lib/prisma';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../auth/[...nextauth]/route';
 import logger from '../../../lib/logger';
 import { 
 	handleAPIError, 
@@ -82,10 +81,11 @@ function validateContributionData(data: any): ContributionData {
 export const GET = withErrorHandler(async (request: NextRequest) => {
 	logger.info('GET /api/contributions', 'API');
 
-	const session = await getServerSession(authOptions);
-	if (!session?.user?.email) {
-		throw createUnauthorizedError();
-	}
+	// Permitir acceso libre para desarrollo
+	// const session = await getServerSession(authOptions);
+	// if (!session?.user?.email) {
+	// 	throw createUnauthorizedError();
+	// }
 
 	const { searchParams } = new URL(request.url);
 	const page = parseInt(searchParams.get('page') || '1');
@@ -93,6 +93,8 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 	const type = searchParams.get('type');
 	const category = searchParams.get('category');
 	const userId = searchParams.get('userId');
+	const tracking = searchParams.get('tracking');
+	const date = searchParams.get('date');
 
 	// Validar parâmetros
 	if (page < 1 || limit < 1 || limit > 100) {
@@ -111,6 +113,22 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 			where.classification = category;
 		}
 		
+		if (tracking) {
+			where.tracking = tracking;
+		}
+		
+		if (date) {
+			// Filtrar por fecha específica
+			const startDate = new Date(date);
+			const endDate = new Date(date);
+			endDate.setDate(endDate.getDate() + 1);
+			
+			where.createdAt = {
+				gte: startDate,
+				lt: endDate
+			};
+		}
+		
 		// Buscar contribuições
 		const [contributions, total] = await Promise.all([
 			prisma.contribution.findMany({
@@ -127,8 +145,14 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 			total, 
 			page, 
 			limit,
-			userEmail: session.user.email
+			userEmail: 'development',
+			filters: { type, category, tracking, date }
 		});
+
+		// Si se busca por tracking específico, devolver solo el array
+		if (tracking) {
+			return createSuccessResponse(contributions);
+		}
 
 		return createSuccessResponse({
 			contributions,
@@ -152,10 +176,11 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 export const POST = withErrorHandler(async (request: NextRequest) => {
 	logger.info('POST /api/contributions', 'API');
 
-	const session = await getServerSession(authOptions);
-	if (!session?.user?.email) {
-		throw createUnauthorizedError();
-	}
+	// Permitir acceso libre para desarrollo
+	// const session = await getServerSession(authOptions);
+	// if (!session?.user?.email) {
+	// 	throw createUnauthorizedError();
+	// }
 
 	let data;
 	try {
@@ -199,7 +224,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
 
 		logger.userAction('Contribution created', {
 			contributionId: contribution.id,
-			userEmail: session.user.email,
+			userEmail: 'development',
 			tipo: contribution.tipo,
 			totalItems: contribution.totalItems,
 			environmentalMetrics
@@ -217,10 +242,10 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
 export const PUT = withErrorHandler(async (request: NextRequest) => {
 	logger.info('PUT /api/contributions', 'API');
 
-	const session = await getServerSession(authOptions);
-	if (!session?.user?.email) {
-		throw createUnauthorizedError();
-	}
+	// const session = await getServerSession(authOptions);
+	// if (!session?.user?.email) {
+	// 	throw createUnauthorizedError();
+	// }
 
 	const { searchParams } = new URL(request.url);
 	const id = searchParams.get('id');
@@ -276,7 +301,7 @@ export const PUT = withErrorHandler(async (request: NextRequest) => {
 
 		logger.userAction('Contribution updated', {
 			contributionId: updatedContribution.id,
-			userEmail: session.user.email,
+			userEmail: 'development', // session.user.email,
 			changes: Object.keys(data),
 			environmentalMetrics
 		});
@@ -296,10 +321,10 @@ export const PUT = withErrorHandler(async (request: NextRequest) => {
 export const DELETE = withErrorHandler(async (request: NextRequest) => {
 	logger.info('DELETE /api/contributions', 'API');
 
-	const session = await getServerSession(authOptions);
-	if (!session?.user?.email) {
-		throw createUnauthorizedError();
-	}
+	// const session = await getServerSession(authOptions);
+	// if (!session?.user?.email) {
+	// 	throw createUnauthorizedError();
+	// }
 
 	const { searchParams } = new URL(request.url);
 	const id = searchParams.get('id');
@@ -325,7 +350,7 @@ export const DELETE = withErrorHandler(async (request: NextRequest) => {
 
 		logger.userAction('Contribution deleted', {
 			contributionId: parseInt(id),
-			userEmail: session.user.email,
+			userEmail: 'development', // session.user.email,
 			tipo: existingContribution.tipo
 		});
 

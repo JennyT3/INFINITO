@@ -1,0 +1,1252 @@
+"use client";
+import { useState, useRef, useEffect } from "react";
+import { ArrowLeft, Download, Upload, Edit, Filter, Calculator, CheckCircle, Package, Recycle, Palette, Heart, Shirt, Image as ArtIcon, RefreshCw, Gift, Eye, Trash2, AlertTriangle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { calculateStandardWeight, calculateEnvironmentalImpact, generateCertificateHash } from "@/lib/utils";
+import jsPDF from "jspdf";
+import * as React from "react";
+import { saveAs } from 'file-saver';
+import toast, { Toaster } from 'react-hot-toast';
+import AdvancedFilters from "@/components/admin/AdvancedFilters";
+import ActiveFiltersChips from "@/components/admin/ActiveFiltersChips";
+import { useAdminFilters } from "@/hooks/useAdminFilters";
+import LoadingSpinner from "@/components/admin/LoadingSpinner";
+import StatusBadge from "@/components/admin/StatusBadge";
+import EmptyState from "@/components/admin/EmptyState";
+import ConfirmationDialog from "@/components/admin/ConfirmationDialog";
+import ValidationFeedback from "@/components/admin/ValidationFeedback";
+import { useValidation } from "@/hooks/useValidation";
+import { 
+  notifyContributionProcessed, 
+  notifyContributionVerified, 
+  notifyContributionCertified, 
+  notifyBulkActionCompleted, 
+  notifyExportCompleted, 
+  notifyError 
+} from "@/lib/notifications";
+import NotificationCenter, { useNotificationCenter } from "@/components/admin/NotificationCenter";
+import { 
+  exportContributionsToCSV, 
+  exportContributionsToPDF 
+} from "@/lib/export-utils";
+import ExportMenu from "@/components/admin/ExportMenu";
+
+const TABS = [
+  { key: "ropa", label: "Roupas" },
+  { key: "arte", label: "Arte" },
+  { key: "reciclaje", label: "Reciclagem" },
+  { key: "solicitudes", label: "Solicitações de Roupa" },
+];
+
+// Classification options according to INFINITO definition
+const CLASSIFICATION_OPTIONS = [
+  { 
+    key: "reutilizable", 
+    label: "Reutilizable", 
+    description: "Prenda em bom estado → Marketplace ou Doação",
+    color: "bg-green-100 text-green-800",
+    icon: <Package className="w-4 h-4" />
+  },
+  { 
+    key: "reparable", 
+    label: "Reparable", 
+    description: "Prenda com pequenos defeitos → Artistas locais",
+    color: "bg-yellow-100 text-yellow-800",
+    icon: <Palette className="w-4 h-4" />
+  },
+  { 
+    key: "reciclable", 
+    label: "Reciclable", 
+    description: "Prenda deteriorada → Centros de reciclagem",
+    color: "bg-blue-100 text-blue-800",
+    icon: <Recycle className="w-4 h-4" />
+  }
+];
+
+// Tracking states according to INFINITO definition
+const TRACKING_STATES = [
+  { key: "pendiente", label: "Pendiente", color: "bg-gray-100 text-gray-800" },
+  { key: "entregado", label: "Entregado ✓", color: "bg-blue-100 text-blue-800" },
+  { key: "verificado", label: "Verificado ✓", color: "bg-yellow-100 text-yellow-800" },
+  { key: "certificado_disponible", label: "Certificado disponível ✓", color: "bg-green-100 text-green-800" }
+];
+
+// Componente Skeleton Loader
+const SkeletonRow = () => (
+  <tr className="animate-pulse">
+    <td className="px-2 py-4"><div className="h-4 w-4 bg-gray-200 rounded"></div></td>
+    <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-20"></div></td>
+    <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-24"></div></td>
+    <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-16"></div></td>
+    <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-20"></div></td>
+    <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-16"></div></td>
+    <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-20"></div></td>
+    <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-16"></div></td>
+    <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-20"></div></td>
+    <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-16"></div></td>
+  </tr>
+);
+
+export default function AdminContributionsPage() {
+  const [tab, setTab] = useState("ropa");
+  const [editing, setEditing] = useState<string|null>(null);
+  const [contribs, setContribs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [processingModal, setProcessingModal] = useState<any>(null);
+  const [calculatorData, setCalculatorData] = useState({
+    type: '',
+    material: '',
+    weight: '',
+    condition: ''
+  });
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+
+  // Nuevos estados para mejor UX
+  const [isLoading, setIsLoading] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  
+  // Estados para diálogos de confirmación
+  const [confirmationDialog, setConfirmationDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    action: () => void;
+    variant?: 'default' | 'destructive' | 'warning';
+  }>({
+    isOpen: false,
+    title: '',
+    description: '',
+    action: () => {},
+    variant: 'default'
+  });
+
+  // Hook de validación
+  const validation = useValidation();
+
+  // Hook de notificaciones
+  const notificationCenter = useNotificationCenter();
+
+  // Botones de filtro por tipo
+  const TYPE_BUTTONS = [
+    { key: 'clothing', label: 'Clothing', icon: Shirt, gradient: 'from-pink-500 to-rose-500' },
+    { key: 'art', label: 'Art', icon: ArtIcon, gradient: 'from-purple-500 to-pink-400' },
+    { key: 'recycle', label: 'Recycle', icon: RefreshCw, gradient: 'from-green-500 to-blue-500' },
+    { key: 'receive', label: 'Receive', icon: Gift, gradient: 'from-blue-500 to-cyan-400' },
+  ];
+
+  // Estado para el panel de detalle
+  const [selectedContribution, setSelectedContribution] = useState<any>(null);
+  const [products, setProducts] = useState<any[]>([]);
+
+  // Estado para el dialog de clasificación masiva
+  const [showClassifyDialog, setShowClassifyDialog] = useState(false);
+  const [selectedClassification, setSelectedClassification] = useState('');
+
+  // Usar el hook de filtros avanzados
+  const { filters, filteredData: filtered, updateFilters, clearFilters, filterStats } = useAdminFilters(contribs, 'contributions');
+  // 2. Estado para selección múltiple
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const allSelected = filtered.length > 0 && filtered.every(c => selectedIds.includes(c.id));
+  // Función toggleAll con notificación
+  const toggleAll = () => {
+    const newSelection = allSelected ? [] : filtered.map(c => c.id);
+    setSelectedIds(newSelection);
+    if (newSelection.length > 0) {
+      toast.success(`Selected ${newSelection.length} contributions`);
+    } else {
+      toast('Selection cleared');
+    }
+  };
+
+  // Función toggleOne con notificación
+  const toggleOne = (id: number) => {
+    const newSelection = selectedIds.includes(id) 
+      ? selectedIds.filter(i => i !== id) 
+      : [...selectedIds, id];
+    setSelectedIds(newSelection);
+    if (newSelection.length > 0 && newSelection.length <= 3) {
+      toast(`Selected ${newSelection.length} contribution${newSelection.length > 1 ? 's' : ''}`);
+    }
+  };
+
+  // Estados de carga
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
+  const [search, setSearch] = useState('');
+
+  // Función de validación de filtros
+  const validateFilters = () => {
+    const newErrors: {[key: string]: string} = {};
+    
+    if (search && search.length < 2) {
+      newErrors.search = 'Search term must be at least 2 characters';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Función para limpiar errores
+  const clearErrors = () => {
+    setErrors({});
+  };
+
+  // Función para confirmar acciones destructivas
+  const confirmAction = (action: string, callback: () => void) => {
+    if (window.confirm(`Are you sure you want to ${action}? This action cannot be undone.`)) {
+      callback();
+    }
+  };
+
+  // Función loadContributions con loading state
+  async function loadContributions() {
+    setIsLoading(true);
+    setError(null);
+    setSuccessMessage(null);
+    
+    try {
+      const response = await fetch('/api/contributions');
+      console.log('API Response status:', response.status);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('API Response data:', data);
+        
+        // Manejar diferentes formatos de respuesta
+        let contribs = [];
+        if (data.data && Array.isArray(data.data)) {
+          contribs = data.data;
+        } else if (data.contributions && Array.isArray(data.contributions)) {
+          contribs = data.contributions;
+        } else if (Array.isArray(data)) {
+          contribs = data;
+        } else {
+          console.warn('Unexpected API response format:', data);
+          contribs = [];
+        }
+        
+        setContribs(contribs);
+        if (contribs.length === 0) {
+          setSuccessMessage('No contributions found in the system');
+        } else {
+          setSuccessMessage(`Successfully loaded ${contribs.length} contributions`);
+          // Auto-hide success message after 3 seconds
+          setTimeout(() => setSuccessMessage(null), 3000);
+        }
+      } else {
+        const errorText = await response.text();
+        console.error('API Error:', response.status, errorText);
+        setError(`Failed to load contributions: ${response.status} - ${errorText}`);
+        toast.error(`Failed to load contributions: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Error loading contributions:', error);
+      setError('Error connecting to server. Please check your internet connection and try again.');
+      toast.error('Error connecting to server');
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    // Simular login admin automáticamente
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('isAdmin', 'true');
+    }
+    
+    loadContributions();
+  }, []);
+
+  const handleProcessContribution = (contrib: any) => {
+    setProcessingModal(contrib);
+    setCalculatorData({
+      type: contrib.tipo || '',
+      material: '',
+      weight: '',
+      condition: ''
+    });
+  };
+
+  const handleCalculateImpact = () => {
+    const weight = parseFloat(calculatorData.weight) || 0;
+    const impact = calculateEnvironmentalImpact(weight);
+    return impact;
+  };
+
+  const handleClassifyContribution = async (classification: string) => {
+    if (!processingModal) return;
+    
+    try {
+      const impact = handleCalculateImpact();
+      const updatedData = {
+        ...processingModal,
+        trackingState: 'verificado',
+        classification,
+        destination: getDestinationForClassification(classification),
+        co2Saved: impact.co2,
+        waterSaved: impact.water,
+        naturalResources: impact.resources,
+        verified: true
+      };
+      
+      // Update contribution
+      const response = await fetch(`/api/contributions/${processingModal.tracking}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedData)
+      });
+      
+      if (response.ok) {
+        setProcessingModal(null);
+        loadContributions();
+        
+        // Notificación automática
+        notifyContributionProcessed(
+          processingModal.tracking,
+          classification,
+          getDestinationForClassification(classification),
+          processingModal.totalItems || 0
+        );
+        
+        // Notificación de impacto ambiental
+        notifyContributionVerified(
+          processingModal.tracking,
+          impact
+        );
+        
+        toast.success('Contribuição processada com sucesso!');
+      }
+    } catch (error) {
+      console.error('Error processing contribution:', error);
+      notifyError('process contribution', error instanceof Error ? error.message : 'Unknown error', processingModal.tracking);
+      toast.error('Erro ao processar contribuição');
+    }
+  };
+
+  const getDestinationForClassification = (classification: string) => {
+    switch (classification) {
+      case 'reutilizable': return 'marketplace';
+      case 'reparable': return 'artistas';
+      case 'reciclable': return 'reciclaje';
+      default: return 'pending';
+    }
+  };
+
+  const handleGenerateCertificate = async (contrib: any) => {
+    try {
+      const certificateData = {
+        tracking: contrib.tracking,
+        nome: contrib.nome,
+        classification: contrib.classification,
+        impacto: {
+          co2: contrib.co2Saved,
+          water: contrib.waterSaved,
+          resources: contrib.naturalResources
+        },
+        timestamp: new Date().toISOString()
+      };
+      
+      const hash = await generateCertificateHash(certificateData);
+      
+      // Update contribution with certificate
+      const response = await fetch(`/api/contributions/${contrib.tracking}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...contrib,
+          trackingState: 'certificado_disponible',
+          certificateHash: hash,
+          certificateDate: new Date()
+        })
+      });
+      
+      if (response.ok) {
+        loadContributions();
+        
+        // Notificación automática de certificado generado
+        notifyContributionCertified(
+          contrib.tracking,
+          hash,
+          {
+            co2: contrib.co2Saved,
+            water: contrib.waterSaved,
+            resources: contrib.naturalResources
+          }
+        );
+        
+        toast.success('Certificado gerado com sucesso!');
+      }
+    } catch (error) {
+      console.error('Error generating certificate:', error);
+      notifyError('generate certificate', error instanceof Error ? error.message : 'Unknown error', contrib.tracking);
+      toast.error('Erro ao gerar certificado');
+    }
+  };
+
+  // Cargar productos asociados a una contribución
+  const loadProductsForContribution = async (tracking: string) => {
+    try {
+      const response = await fetch(`/api/products?tracking=${tracking}`);
+      const data = await response.json();
+      setProducts(Array.isArray(data) ? data : data.products || data.data || []);
+    } catch (error) {
+      setProducts([]);
+    }
+  };
+
+  // Función handleRowClick con notificaciones
+  const handleRowClick = async (contrib: any) => {
+    setSelectedContribution(contrib);
+    toast.success(`Viewing details for ${contrib.tracking}`);
+    
+    // Cargar productos asociados si es clothing y decision es sell
+    if (contrib.tipo === 'clothing' && contrib.decision === 'sell') {
+      try {
+        const response = await fetch(`/api/products?tracking=${contrib.tracking}`);
+        if (response.ok) {
+          const data = await response.json();
+          setProducts(Array.isArray(data) ? data : []);
+          if (data.length > 0) {
+            toast.success(`Found ${data.length} associated product${data.length > 1 ? 's' : ''}`);
+          } else {
+            toast('No products found for this contribution');
+          }
+        }
+      } catch (error) {
+        toast.error('Error loading associated products');
+      }
+    } else {
+      setProducts([]);
+    }
+  };
+
+  // Función para cerrar detalles con notificación
+  const closeDetails = () => {
+    setSelectedContribution(null);
+    setProducts([]);
+    toast('Details closed');
+  };
+
+  // Mejorar la función de búsqueda con validación
+  const handleSearch = (value: string) => {
+    setSearch(value);
+    if (value.length > 0 && value.length < 2) {
+      setErrors(prev => ({ ...prev, search: 'Search term must be at least 2 characters' }));
+    } else {
+      setErrors(prev => ({ ...prev, search: '' }));
+    }
+  };
+
+  // 3. Mejorar el filtro de la tabla para aplicar todos los filtros
+  // const filtered = contribs.filter(c =>
+  //   (!typeFilter || c.tipo?.toLowerCase() === typeFilter) &&
+  //   (!statusFilter || c.trackingState === statusFilter) &&
+  //   (!classificationFilter || c.classification === classificationFilter) &&
+  //   (!destinationFilter || c.destination === destinationFilter) &&
+  //   (
+  //     c.tracking?.toLowerCase().includes(search.toLowerCase()) ||
+  //     c.nome?.toLowerCase().includes(search.toLowerCase()) ||
+  //     c.tipo?.toLowerCase().includes(search.toLowerCase())
+  //   )
+  // );
+
+  // 2. Menú de acciones masivas
+  {selectedIds.length > 0 && (
+    <div className="flex gap-2 mb-4 justify-end bg-blue-50 p-3 rounded-lg border border-blue-200">
+      <span className="font-semibold">{selectedIds.length} selected</span>
+      <button 
+        className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed" 
+        onClick={() => confirmAction(`approve ${selectedIds.length} contributions`, handleBulkApprove)}
+        disabled={isProcessing || selectedIds.length === 0}
+        aria-label={`Approve ${selectedIds.length} selected contributions`}
+      >
+        {isProcessing ? 'Processing...' : 'Approve'}
+      </button>
+      <button className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600" onClick={() => setShowClassifyDialog(true)}>Classify</button>
+      <button className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700" onClick={handleBulkCertify}>Certify</button>
+      <button 
+        className="px-3 py-1 bg-gray-300 text-gray-800 rounded hover:bg-gray-400" 
+        onClick={() => {
+          setSelectedIds([]);
+          toast('Selection cleared');
+        }}
+      >
+        Clear
+      </button>
+    </div>
+  )}
+
+  // Función para exportar contribuciones
+  async function handleExport(format: 'csv' | 'pdf', scope: 'filtered' | 'all') {
+    setIsExporting(true);
+    const loadingToast = toast.loading(`Exporting ${scope} contributions to ${format.toUpperCase()}...`);
+    
+    try {
+      const dataToExport = scope === 'filtered' ? filtered : contribs;
+      
+      if (format === 'csv') {
+        const result = exportContributionsToCSV(dataToExport, {
+          fileName: `contributions_${scope}_${new Date().toISOString().split('T')[0]}.csv`
+        });
+        
+        notifyExportCompleted(
+          'contributions',
+          result.recordCount,
+          result.fileName
+        );
+        
+        toast.success(`CSV exported successfully! ${result.recordCount} records`, { id: loadingToast });
+        setSuccessMessage(`Contributions exported to CSV successfully! ${result.recordCount} records`);
+      } else if (format === 'pdf') {
+        const result = exportContributionsToPDF(dataToExport, {
+          fileName: `contributions_${scope}_${new Date().toISOString().split('T')[0]}.pdf`
+        });
+        
+        notifyExportCompleted(
+          'contributions',
+          result.recordCount,
+          result.fileName
+        );
+        
+        toast.success(`PDF exported successfully! ${result.recordCount} records`, { id: loadingToast });
+        setSuccessMessage(`Contributions exported to PDF successfully! ${result.recordCount} records`);
+      }
+      
+      setTimeout(() => setSuccessMessage(null), 5000);
+    } catch (error) {
+      console.error('Error exporting:', error);
+      notifyError('export', error instanceof Error ? error.message : 'Unknown error');
+      toast.error(`Error exporting ${format.toUpperCase()}`, { id: loadingToast });
+      setError(`Failed to export ${format.toUpperCase()}. Please try again.`);
+    } finally {
+      setIsExporting(false);
+    }
+  }
+
+  // Acción masiva Approve con loading state y confirmación
+  async function handleBulkApprove() {
+    if (selectedIds.length === 0) {
+      toast.error('Please select contributions to approve');
+      return;
+    }
+
+    setConfirmationDialog({
+      isOpen: true,
+      title: 'Approve Contributions',
+      description: `Are you sure you want to approve ${selectedIds.length} selected contribution${selectedIds.length > 1 ? 's' : ''}? This will mark them as verified.`,
+      action: async () => {
+        setIsProcessing(true);
+        const loadingToast = toast.loading(`Approving ${selectedIds.length} contributions...`);
+        try {
+          for (const id of selectedIds) {
+            const contrib = filtered.find(c => c.id === id);
+            if (!contrib) continue;
+            await fetch(`/api/contributions/${contrib.tracking}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ...contrib, trackingState: 'verificado' })
+            });
+          }
+          setSelectedIds([]);
+          await loadContributions();
+          
+          // Notificación automática de acción masiva
+          notifyBulkActionCompleted(
+            'approve',
+            selectedIds.length,
+            'contributions'
+          );
+          
+          toast.success(`${selectedIds.length} contributions approved successfully!`, { id: loadingToast });
+          setSuccessMessage(`${selectedIds.length} contributions approved successfully!`);
+          setTimeout(() => setSuccessMessage(null), 3000);
+        } catch (error) {
+          console.error('Error approving contributions:', error);
+          toast.error('Error approving contributions', { id: loadingToast });
+          setError('Failed to approve contributions. Please try again.');
+        } finally {
+          setIsProcessing(false);
+        }
+      },
+      variant: 'default'
+    });
+  }
+
+  // Acción masiva Classify con confirmación
+  async function handleBulkClassify() {
+    if (selectedIds.length === 0) {
+      toast.error('Please select contributions to classify');
+      return;
+    }
+
+    if (!selectedClassification) {
+      toast.error('Please select a classification');
+      return;
+    }
+
+    setConfirmationDialog({
+      isOpen: true,
+      title: 'Classify Contributions',
+      description: `Are you sure you want to classify ${selectedIds.length} selected contribution${selectedIds.length > 1 ? 's' : ''} as "${selectedClassification}"?`,
+      action: async () => {
+        setIsProcessing(true);
+        const loadingToast = toast.loading(`Classifying ${selectedIds.length} contributions...`);
+        try {
+          for (const id of selectedIds) {
+            const contrib = filtered.find(c => c.id === id);
+            if (!contrib) continue;
+            await fetch(`/api/contributions/${contrib.tracking}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ...contrib, classification: selectedClassification })
+            });
+          }
+          setSelectedIds([]);
+          setShowClassifyDialog(false);
+          setSelectedClassification('');
+          await loadContributions();
+          
+          // Notificación automática de acción masiva
+          notifyBulkActionCompleted(
+            'classify',
+            selectedIds.length,
+            'contributions'
+          );
+          
+          toast.success(`${selectedIds.length} contributions classified as ${selectedClassification}!`, { id: loadingToast });
+          setSuccessMessage(`${selectedIds.length} contributions classified as ${selectedClassification}!`);
+          setTimeout(() => setSuccessMessage(null), 3000);
+        } catch (error) {
+          console.error('Error classifying contributions:', error);
+          toast.error('Error classifying contributions', { id: loadingToast });
+          setError('Failed to classify contributions. Please try again.');
+        } finally {
+          setIsProcessing(false);
+        }
+      },
+      variant: 'warning'
+    });
+  }
+
+  // Acción masiva Certify con confirmación
+  async function handleBulkCertify() {
+    if (selectedIds.length === 0) {
+      toast.error('Please select contributions to certify');
+      return;
+    }
+
+    setConfirmationDialog({
+      isOpen: true,
+      title: 'Generate Certificates',
+      description: `Are you sure you want to generate blockchain certificates for ${selectedIds.length} selected contribution${selectedIds.length > 1 ? 's' : ''}? This action cannot be undone.`,
+      action: async () => {
+        setIsProcessing(true);
+        const loadingToast = toast.loading(`Generating certificates for ${selectedIds.length} contributions...`);
+        try {
+          for (const id of selectedIds) {
+            const contrib = filtered.find(c => c.id === id);
+            if (!contrib) continue;
+            const certificateHash = `CERT_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            await fetch(`/api/contributions/${contrib.tracking}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                ...contrib, 
+                trackingState: 'certificado_disponible',
+                certificateHash: certificateHash
+              })
+            });
+          }
+          setSelectedIds([]);
+          await loadContributions();
+          toast.success(`${selectedIds.length} contributions certified with blockchain certificates!`, { id: loadingToast });
+          setSuccessMessage(`${selectedIds.length} blockchain certificates generated successfully!`);
+          setTimeout(() => setSuccessMessage(null), 3000);
+        } catch (error) {
+          console.error('Error certifying contributions:', error);
+          toast.error('Error certifying contributions', { id: loadingToast });
+          setError('Failed to generate certificates. Please try again.');
+        } finally {
+          setIsProcessing(false);
+        }
+      },
+      variant: 'destructive'
+    });
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-4">
+      {/* Skip link para accesibilidad */}
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-blue-600 text-white px-4 py-2 rounded z-50">
+        Skip to main content
+      </a>
+      
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+          success: {
+            duration: 3000,
+            iconTheme: {
+              primary: '#4ade80',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            duration: 4000,
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
+      
+      <div className="max-w-6xl mx-auto">
+        {/* Header con mejor semántica */}
+        <header className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900" id="page-title">
+                Contributions Management
+              </h1>
+              <p className="text-gray-600 mt-2">
+                Manage and track all contributions in the system
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <p className="text-sm text-gray-500">Total Contributions</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {isLoading ? '...' : contribs.length}
+                </p>
+              </div>
+              
+              {/* Notification Center */}
+              <NotificationCenter
+                notifications={notificationCenter.notifications}
+                onMarkAsRead={notificationCenter.markAsRead}
+                onMarkAllAsRead={notificationCenter.markAllAsRead}
+                onClearAll={notificationCenter.clearAll}
+                onActionClick={(notification) => {
+                  if (notification.action?.url) {
+                    window.location.href = notification.action.url;
+                  }
+                }}
+              />
+              
+              <button
+                onClick={() => loadContributions()}
+                disabled={isLoading}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2"
+                aria-label="Refresh contributions list"
+              >
+                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                Refresh
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {/* Main content area */}
+        <main id="main-content" role="main" aria-labelledby="page-title">
+          {/* Error and Success Messages */}
+          {error && (
+            <ValidationFeedback
+              type="error"
+              message={error}
+              dismissible={true}
+              onDismiss={() => setError(null)}
+              className="mb-4"
+            />
+          )}
+          
+          {successMessage && (
+            <ValidationFeedback
+              type="success"
+              message={successMessage}
+              dismissible={true}
+              onDismiss={() => setSuccessMessage(null)}
+              className="mb-4"
+            />
+          )}
+
+          {/* Advanced Filters */}
+          <AdvancedFilters
+            onFiltersChange={updateFilters}
+            filters={filters}
+            type="contributions"
+            loading={loading}
+            onRefresh={loadContributions}
+          />
+
+          {/* Filter Stats */}
+          {filterStats.hasFilters && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-medium text-blue-800">
+                    Showing {filterStats.filtered} of {filterStats.total} contributions
+                  </span>
+                  <ActiveFiltersChips
+                    filters={filters}
+                    onRemoveFilter={(filterKey) => {
+                      const newFilters = { ...filters };
+                      delete newFilters[filterKey];
+                      updateFilters(newFilters);
+                    }}
+                  />
+                </div>
+                <button
+                  onClick={clearFilters}
+                  className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  Clear all filters
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Loading State */}
+          {isLoading && (
+            <div className="flex items-center justify-center py-12">
+              <LoadingSpinner size="lg" text="Loading contributions..." showText={true} />
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!isLoading && filtered.length === 0 && (
+            <EmptyState
+              type="contributions"
+              hasFilters={filterStats.hasFilters}
+              onClearFilters={clearFilters}
+              onRefresh={loadContributions}
+            />
+          )}
+
+          {/* Content when data is available */}
+          {!isLoading && filtered.length > 0 && (
+            <>
+              {/* Bulk Actions */}
+              {selectedIds.length > 0 && (
+                <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="w-5 h-5 text-yellow-600" />
+                      <span className="text-sm font-medium text-yellow-800">
+                        {selectedIds.length} contribution{selectedIds.length > 1 ? 's' : ''} selected
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        onClick={handleBulkApprove}
+                        disabled={isProcessing}
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        {isProcessing ? (
+                          <LoadingSpinner size="sm" />
+                        ) : (
+                          <>
+                            <CheckCircle className="w-4 h-4 mr-1" />
+                            Approve
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        onClick={() => setShowClassifyDialog(true)}
+                        disabled={isProcessing}
+                        size="sm"
+                        variant="outline"
+                      >
+                        <Package className="w-4 h-4 mr-1" />
+                        Classify
+                      </Button>
+                      <Button
+                        onClick={handleBulkCertify}
+                        disabled={isProcessing}
+                        size="sm"
+                        className="bg-purple-600 hover:bg-purple-700"
+                      >
+                        {isProcessing ? (
+                          <LoadingSpinner size="sm" />
+                        ) : (
+                          <>
+                            <CheckCircle className="w-4 h-4 mr-1" />
+                            Certify
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Export Menu */}
+              <div className="mb-4 flex justify-end">
+                <ExportMenu
+                  onExport={handleExport}
+                  isExporting={isExporting}
+                  dataType="contributions"
+                  filteredCount={filtered.length}
+                  totalCount={contribs.length}
+                  hasFilters={filterStats.hasFilters}
+                />
+              </div>
+
+              {/* Data Table */}
+              <div className="bg-white rounded-lg shadow overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <input
+                            type="checkbox"
+                            checked={allSelected}
+                            onChange={toggleAll}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            aria-label="Select all contributions"
+                          />
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Tracking
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Type
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Classification
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Destination
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Items
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Impact
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {filtered.map((contrib) => (
+                        <tr 
+                          key={contrib.id} 
+                          className="hover:bg-gray-50 cursor-pointer transition-colors"
+                          onClick={() => handleRowClick(contrib)}
+                        >
+                          <td className="px-2 py-4">
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.includes(contrib.id)}
+                              onChange={() => toggleOne(contrib.id)}
+                              onClick={(e) => e.stopPropagation()}
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              aria-label={`Select contribution ${contrib.tracking}`}
+                            />
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {contrib.tracking}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <StatusBadge status={contrib.tipo} type="type" />
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <StatusBadge status={contrib.estado} type="status" />
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {contrib.classification ? (
+                              <StatusBadge status={contrib.classification} type="classification" />
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {contrib.destination || '-'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {contrib.totalItems || 0}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {contrib.co2Saved ? `${contrib.co2Saved.toFixed(1)}kg CO₂` : '-'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRowClick(contrib);
+                                }}
+                                className="text-blue-600 hover:text-blue-900"
+                                aria-label={`View details for ${contrib.tracking}`}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleProcessContribution(contrib);
+                                }}
+                                className="text-green-600 hover:text-green-900"
+                                aria-label={`Process ${contrib.tracking}`}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
+        </main>
+
+        {/* Confirmation Dialog */}
+        <ConfirmationDialog
+          isOpen={confirmationDialog.isOpen}
+          onClose={() => setConfirmationDialog({ ...confirmationDialog, isOpen: false })}
+          onConfirm={confirmationDialog.action}
+          title={confirmationDialog.title}
+          description={confirmationDialog.description}
+          variant={confirmationDialog.variant}
+          loading={isProcessing}
+        />
+
+        {/* Processing Modal */}
+        <Dialog open={!!processingModal} onOpenChange={() => setProcessingModal(null)}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Processar Contribuição - {processingModal?.tracking}</DialogTitle>
+              </DialogHeader>
+              
+              <div className="space-y-6">
+                {/* Calculadora Ambiental */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <Calculator className="w-5 h-5" />
+                    Calculadora Ambiental
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                      <input
+                        type="text"
+                        value={calculatorData.type}
+                        onChange={(e) => setCalculatorData({...calculatorData, type: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Material</label>
+                      <input
+                        type="text"
+                        value={calculatorData.material}
+                        onChange={(e) => setCalculatorData({...calculatorData, material: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Peso (kg)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={calculatorData.weight}
+                        onChange={(e) => setCalculatorData({...calculatorData, weight: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Condição</label>
+                      <select
+                        value={calculatorData.condition}
+                        onChange={(e) => setCalculatorData({...calculatorData, condition: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      >
+                        <option value="">Selecionar...</option>
+                        <option value="excelente">Excelente</option>
+                        <option value="bom">Bom</option>
+                        <option value="regular">Regular</option>
+                        <option value="deteriorado">Deteriorado</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  {/* Impact Preview */}
+                  {calculatorData.weight && (
+                    <div className="mt-4 p-3 bg-blue-50 rounded-md">
+                      <h4 className="font-medium text-blue-800">Impacto Calculado:</h4>
+                      <div className="grid grid-cols-3 gap-4 mt-2">
+                        <div className="text-sm">
+                          <div className="font-medium">CO₂</div>
+                          <div className="text-blue-600">{handleCalculateImpact().co2} kg</div>
+                        </div>
+                        <div className="text-sm">
+                          <div className="font-medium">Água</div>
+                          <div className="text-blue-600">{handleCalculateImpact().water} L</div>
+                        </div>
+                        <div className="text-sm">
+                          <div className="font-medium">Recursos</div>
+                          <div className="text-blue-600">{handleCalculateImpact().resources}%</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Classificação */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Classificação da Prenda</h3>
+                  <div className="space-y-3">
+                    {CLASSIFICATION_OPTIONS.map((option) => (
+                      <button
+                        key={option.key}
+                        onClick={() => handleClassifyContribution(option.key)}
+                        className={`w-full p-4 rounded-lg border-2 border-gray-200 hover:border-gray-300 text-left transition-colors ${option.color}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          {option.icon}
+                          <div>
+                            <div className="font-medium">{option.label}</div>
+                            <div className="text-sm opacity-75">{option.description}</div>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Panel de detalle de contribución */}
+          <Dialog open={!!selectedContribution} onOpenChange={() => setSelectedContribution(null)}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Contribution Details - {selectedContribution?.tracking}</DialogTitle>
+                <DialogDescription>
+                  Detailed information about this contribution
+                </DialogDescription>
+                <button 
+                  onClick={closeDetails}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              </DialogHeader>
+              {selectedContribution && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div><b>Code:</b> {selectedContribution.tracking}</div>
+                    <div><b>Date:</b> {new Date(selectedContribution.fecha).toLocaleString()}</div>
+                    <div><b>Type:</b> {selectedContribution.tipo}</div>
+                    <div><b>Method:</b> {selectedContribution.metodo}</div>
+                    <div><b>Pickup Point:</b> {selectedContribution.pickupPoint || '-'}</div>
+                    <div><b>Decision:</b> {selectedContribution.decision || '-'}</div>
+                    <div><b>Status:</b> {selectedContribution.estado}</div>
+                    <div><b>Tracking State:</b> {selectedContribution.trackingState}</div>
+                    <div><b>Classification:</b> {selectedContribution.classification}</div>
+                    <div><b>Destination:</b> {selectedContribution.destination}</div>
+                    <div><b>Certificate:</b> {selectedContribution.certificateHash ? 'Available' : 'Not generated'}</div>
+                  </div>
+                  {/* Prendas asociadas si es venta */}
+                  {selectedContribution.tipo === 'clothing' && selectedContribution.decision === 'sell' && (
+                    <div>
+                      <h3 className="font-bold mb-2">Associated Products</h3>
+                      <table className="w-full text-sm border">
+                        <thead>
+                          <tr>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Price</th>
+                            <th>Published</th>
+                            <th>Sold</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {products.length === 0 ? (
+                            <tr><td colSpan={5} className="text-center">No products</td></tr>
+                          ) : products.map(prod => (
+                            <tr key={prod.id}>
+                              <td>{prod.name}</td>
+                              <td>{prod.status}</td>
+                              <td>{prod.price}€</td>
+                              <td>{prod.publishedAt ? new Date(prod.publishedAt).toLocaleDateString() : '-'}</td>
+                              <td>{prod.soldAt ? new Date(prod.soldAt).toLocaleDateString() : '-'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                  {/* Acciones de edición y certificado */}
+                  <div className="flex gap-4 mt-4">
+                    <button className="px-4 py-2 bg-blue-500 text-white rounded-lg">Edit</button>
+                    <button className="px-4 py-2 bg-green-500 text-white rounded-lg">Generate Certificate</button>
+                    <button className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg" onClick={() => setSelectedContribution(null)}>Close</button>
+                  </div>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+
+          {showClassifyDialog && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+                <h3 className="text-lg font-bold mb-4">Select Classification</h3>
+                <select 
+                  value={selectedClassification} 
+                  onChange={(e) => setSelectedClassification(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded mb-4"
+                >
+                  <option value="">Choose classification...</option>
+                  <option value="reutilizable">Reusable</option>
+                  <option value="reparable">Repairable</option>
+                  <option value="reciclable">Recyclable</option>
+                </select>
+                <div className="flex gap-2 justify-end">
+                  <button 
+                    onClick={() => {
+                      setShowClassifyDialog(false);
+                      setSelectedClassification('');
+                      toast('Classification cancelled');
+                    }}
+                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={handleBulkClassify}
+                    disabled={!selectedClassification}
+                    className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 disabled:bg-gray-300"
+                  >
+                    Apply
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
+    </div>
+  );
+} 

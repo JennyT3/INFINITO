@@ -162,6 +162,8 @@ const translations = {
     pickupPointCardDesc: 'Deliver at a certified point',
     homePickupCardDesc: 'We pick up at your address (min. 10kg)',
     invalidPickupPointError: 'Invalid pickup point. Please select a valid point.',
+    phoneNumberPlaceholder: "+351 123 456 789",
+    desiredPickupDayPlaceholder: "dd/mm/yyyy",
   },
   es: {
     donate_repair_recycle: 'Contribuir, Reparar, Reciclar',
@@ -324,6 +326,8 @@ const translations = {
     pickupPointCardDesc: 'Entrega en un punto certificado',
     homePickupCardDesc: 'Recogemos en tu dirección (mín. 10kg)',
     invalidPickupPointError: 'Punto de recogida inválido. Selecciona un punto válido.',
+    phoneNumberPlaceholder: "+351 123 456 789",
+    desiredPickupDayPlaceholder: "dd/mm/aaaa",
   },
   pt: {
     donate_repair_recycle: 'Contribuir, Reparar, Reciclar',
@@ -485,6 +489,8 @@ const translations = {
     pickupPointCardDesc: 'Entrega num ponto certificado',
     homePickupCardDesc: 'Recolhemos no teu endereço (mín. 10kg)',
     invalidPickupPointError: 'Ponto de recolha inválido. Selecione um ponto válido.',
+    phoneNumberPlaceholder: "+351 123 456 789",
+    desiredPickupDayPlaceholder: "dd/mm/aaaa",
   }
 } as const;
 

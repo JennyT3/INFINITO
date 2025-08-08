@@ -38,7 +38,7 @@ export default function ArtisticActionsPage() {
   };
 
   return (
-    <div className="min-h-screen font-raleway bg-[#EDE4DA] pb-24" style={{ backgroundImage: "url('/fondo.png')" }}>
+    <div className="h-screen overflow-y-auto font-raleway bg-[#EDE4DA] pb-24" style={{ backgroundImage: "url('/fondo.png')" }}>
       {/* Menú superior tipo /profile */}
       <div className="bg-white/30 backdrop-blur-md border-b border-white/30 px-6 py-4 sticky top-0 z-10">
         <div className="flex items-center justify-between max-w-2xl mx-auto">

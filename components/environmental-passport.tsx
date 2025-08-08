@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { ArrowLeft, Search, User, Download, Leaf, Droplets, Zap, Award, TrendingUp, ExternalLink, Share2, Home, Recycle, Package, CheckCircle, Store, Star, Lock, HeartHandshake, Tag, ShoppingBag, Truck, Shield, AlertCircle } from "lucide-react"
-import { useLanguage } from "./theme-provider"
+import { useLanguage } from "../components/theme-provider"
 import { useRouter } from "next/navigation"
 import jsPDF from "jspdf"
 import { QRCodeCanvas } from 'qrcode.react'
@@ -59,6 +59,9 @@ export default function EnvironmentalPassport({ onBack }: EnvironmentalPassportP
   const [trackingNumber, setTrackingNumber] = useState("")
   const [showTrackingResults, setShowTrackingResults] = useState(false)
   const [progressStep, setProgressStep] = useState(2)
+  const [contributionData, setContributionData] = useState<any>(null)
+  const [isSearching, setIsSearching] = useState(false)
+  const [searchError, setSearchError] = useState<string | null>(null)
 
   // Animaciones de conteo para los valores de impacto
   const [co2Display, setCo2Display] = useState(0);
@@ -71,38 +74,51 @@ export default function EnvironmentalPassport({ onBack }: EnvironmentalPassportP
       number: userStats?.contributions || 0, 
       color: '#689610', 
       icon: HeartHandshake,
-      label: 'Contribuições',
+      label: 'Contributions',
       date: '2024-01-10'
     },
     compras: { 
       number: userStats?.purchases || 0, 
       color: '#3E88FF', 
       icon: Package,
-      label: 'Compras',
+      label: 'Purchases',
       date: '2024-01-12'
     },
     vendas: { 
       number: userStats?.sales || 0, 
       color: '#F47802', 
       icon: ShoppingBag,
-      label: 'Vendas',
+      label: 'Sales',
       date: '2024-01-15'
     },
     doacoes: { 
       number: userStats?.collectibles || 0, 
       color: '#D42D66', 
       icon: Award,
-      label: 'Donações',
+      label: 'Donations',
       date: '2024-01-20'
     }
   };
 
-  // Timeline de seguimiento
-  const timelineData = [
+  // Calcular total para el círculo
+  const totalContributions = Object.values(sectionData).reduce((sum, section) => sum + section.number, 0);
+
+  // Timeline de seguimiento - adaptado por idioma
+  const timelineData = language === 'pt' ? [
     { date: '15 Jan 2024', status: 'Registo', completed: true },
     { date: '16 Jan 2024', status: 'Recebido', completed: true },
     { date: '18 Jan 2024', status: 'Verificado', completed: true },
     { date: '20 Jan 2024', status: 'Certificação Blockchain', completed: false }
+  ] : language === 'es' ? [
+    { date: '15 Jan 2024', status: 'Registrado', completed: true },
+    { date: '16 Jan 2024', status: 'Recibido', completed: true },
+    { date: '18 Jan 2024', status: 'Verificado', completed: true },
+    { date: '20 Jan 2024', status: 'Certificado Blockchain', completed: false }
+  ] : [
+    { date: '15 Jan 2024', status: 'Registered', completed: true },
+    { date: '16 Jan 2024', status: 'Received', completed: true },
+    { date: '18 Jan 2024', status: 'Verified', completed: true },
+    { date: '20 Jan 2024', status: 'Blockchain Certified', completed: false }
   ];
 
   // Traducciones completas
@@ -141,7 +157,12 @@ export default function EnvironmentalPassport({ onBack }: EnvironmentalPassportP
       water: "Água",
       resources: "Recursos",
       passport: "Passaporte Ambiental",
-      back: "Voltar"
+      back: "Voltar",
+      enterCode: "Por favor, ingresa un código de contribución",
+      noContribution: "No se encontró ninguna contribución con este código.",
+      notToday: "Esta contribución no es de hoy. Solo se muestran contribuciones del día actual.",
+      searchError: "Error al buscar la contribución",
+      tryWith: "Probar con tu contribución:"
     },
     en: {
       contributions: "Contributions",
@@ -157,7 +178,7 @@ export default function EnvironmentalPassport({ onBack }: EnvironmentalPassportP
       shareProfile: "Share your INFINITO.me profile",
       anyoneLink: "Anyone can access this link to view your profile online",
       share: "Share",
-      main: "Impact Passport",
+      main: "Environmental Passport",
       loading: "Loading environmental passport...",
       optimal: "Optimal",
       repair: "Repair",
@@ -177,7 +198,12 @@ export default function EnvironmentalPassport({ onBack }: EnvironmentalPassportP
       water: "Water",
       resources: "Resources",
       passport: "Environmental Passport",
-      back: "Back"
+      back: "Back",
+      enterCode: "Please enter a contribution code",
+      noContribution: "No contribution found with this code.",
+      notToday: "This contribution is not from today. Only today's contributions are shown.",
+      searchError: "Error searching for contribution",
+      tryWith: "Try with your contribution:"
     },
     es: {
       contributions: "Contribuciones",
@@ -198,7 +224,7 @@ export default function EnvironmentalPassport({ onBack }: EnvironmentalPassportP
       optimal: "Óptimo",
       repair: "Reparar",
       recycle: "Reciclar",
-      impact: "Impacto Mensual",
+      impact: "Impacto Mensal",
       approvePurchase: "Confirmar recepción",
       sale: "Venta realizada",
       purchase: "Compra realizada",
@@ -213,11 +239,17 @@ export default function EnvironmentalPassport({ onBack }: EnvironmentalPassportP
       water: "Agua",
       resources: "Recursos",
       passport: "Pasaporte Ambiental",
-      back: "Volver"
+      back: "Volver",
+      enterCode: "Por favor, ingresa un código de contribución",
+      noContribution: "No se encontró ninguna contribución con este código.",
+      notToday: "Esta contribución no es de hoy. Solo se muestran contribuciones del día actual.",
+      searchError: "Error al buscar la contribución",
+      tryWith: "Probar con tu contribución:"
     }
   }
 
-  const t = translations[language as keyof typeof translations] || translations.pt
+  // Usar el idioma seleccionado en el splash
+  const t = translations[language as keyof typeof translations] || translations.en;
 
   // Load user data
   useEffect(() => {
@@ -399,8 +431,8 @@ export default function EnvironmentalPassport({ onBack }: EnvironmentalPassportP
   // Función para compartir perfil
   const shareProfile = async () => {
     const shareData = {
-      title: "Meu Passaporte Ambiental INFINITO",
-      text: `Já evitei ${userStats?.totalImpact.co2Saved}kg de CO₂ e preservei ${userStats?.totalImpact.waterSaved.toLocaleString()}L de água através da economia circular!`,
+              title: "My INFINITO Environmental Passport",
+      text: `I have already avoided ${userStats?.totalImpact.co2Saved}kg of CO₂ and preserved ${userStats?.totalImpact.waterSaved.toLocaleString()}L of water through the circular economy!`,
       url: "https://infinito.me/user/maria-silva",
     }
     if (navigator.share) {
@@ -705,21 +737,21 @@ export default function EnvironmentalPassport({ onBack }: EnvironmentalPassportP
           
           <div class="header">
             <strong>Sancho <span class="heart">❤️</span></strong><br>
-            Graças à tua contribuição de <strong>${totalPieces} peças no dia ${currentDate}</strong>, impediste que materiais valiosos fossem parar ao lixo. Em vez disso, contribuíste para dar-lhes uma nova vida, promovendo a circularidade têxtil e o planeta agradece.
+            Thanks to your contribution of <strong>${totalPieces} pieces on ${currentDate}</strong>, you prevented valuable materials from going to waste. Instead, you contributed to giving them a new life, promoting textile circularity and the planet thanks you.
           </div>
           
           <div class="content">
             <div class="left-side">
               <div class="impact-data">
-                <div class="section-title">Dados de Impacto</div>
-                <div class="impact-item">👕 <strong>Total Peças:</strong> ${totalPieces}</div>
-                <div class="impact-item">- ♻️ ${recyclePercent}% para reciclagem</div>
-                <div class="impact-item">- 🔧 ${repairPercent}% para reparação</div>
-                <div class="impact-item">- 🔄 ${reusePercent}% para reutilização</div>
+                <div class="section-title">Impact Data</div>
+                <div class="impact-item">👕 <strong>Total Pieces:</strong> ${totalPieces}</div>
+                <div class="impact-item">- ♻️ ${recyclePercent}% for recycling</div>
+                <div class="impact-item">- 🔧 ${repairPercent}% for repair</div>
+                <div class="impact-item">- 🔄 ${reusePercent}% for reuse</div>
               </div>
               
               <div class="materials">
-                <div class="section-title">Materiales</div>
+                <div class="section-title">Materials</div>
                 <ul>
                   ${materials.map(m => `<li>• ${m.name}: ${m.percent}%</li>`).join('')}
                 </ul>
@@ -738,45 +770,45 @@ export default function EnvironmentalPassport({ onBack }: EnvironmentalPassportP
           
           <div class="environmental-footprint">
             <div style="text-align: center;">
-              <span class="footprint-header">Tu Pegada Ambiental</span>
+              <span class="footprint-header">Your Environmental Footprint</span>
             </div>
             <div class="footprint-content">
               <div class="fingerprint">
-                <img src="/Huella.png" alt="Huella Ambiental" />
+                <img src="/Huella.png" alt="Environmental Footprint" />
               </div>
               <div class="metrics">
                 <div class="metric">
                   <div class="metric-icon">☁️</div>
                   <div class="metric-value">${co2Saved} kg</div>
-                  <div class="metric-label">Emissões de CO₂eq evitadas</div>
+                  <div class="metric-label">CO₂eq emissions avoided</div>
                 </div>
                 <div class="metric">
                   <div class="metric-icon">💧</div>
                   <div class="metric-value">${waterSaved} L</div>
-                  <div class="metric-label">Água protegida</div>
+                  <div class="metric-label">Water protected</div>
                 </div>
                 <div class="metric">
                   <div class="metric-icon">🌿</div>
                   <div class="metric-value">${resourcesConserved}%</div>
-                  <div class="metric-label">Recursos naturais evitados</div>
+                  <div class="metric-label">Natural resources avoided</div>
                 </div>
               </div>
             </div>
           </div>
           
           <div class="equivalence">
-            <div class="equivalence-title">📍 Isto equivale a:</div>
-            <div class="equivalence-item">Evitar a emissão de CO₂ de um carro a circular por ${Math.round(co2Saved * 3.1)} km</div>
-            <div class="equivalence-item">Poupar água suficiente para ${Math.round(waterSaved * 0.76)} duches rápidos</div>
-            <div class="equivalence-item">Proteger solo agrícola equivalente a ${Math.round(resourcesConserved * 0.65)} dias de produção doméstica</div>
+            <div class="equivalence-title">📍 This is equivalent to:</div>
+            <div class="equivalence-item">Avoiding CO₂ emissions from a car driving for ${Math.round(co2Saved * 3.1)} km</div>
+            <div class="equivalence-item">Saving enough water for ${Math.round(waterSaved * 0.76)} quick showers</div>
+            <div class="equivalence-item">Protecting agricultural soil equivalent to ${Math.round(resourcesConserved * 0.65)} days of domestic production</div>
           </div>
           
           <div class="thanks">
             <div class="thanks-content">
-              <div class="thanks-title">🙏 Obrigado pela tua contribuição!</div>
+              <div class="thanks-title">🙏 Thank you for your contribution!</div>
               <div class="thanks-text">
-                Estamos a criar uma aplicação para que possas ver e inspirar mais pessoas com o teu impacto.<br>
-                Enquanto isso, segue-nos e partilha este movimento com quem te rodeia.
+                We are creating an application so you can see and inspire more people with your impact.<br>
+                Meanwhile, follow us and share this movement with those around you.
               </div>
             </div>
             <div class="thanks-qr">
@@ -805,6 +837,85 @@ export default function EnvironmentalPassport({ onBack }: EnvironmentalPassportP
     }
   };
 
+  // Función para buscar contribuciones reales
+  const searchContribution = async (trackingCode: string) => {
+    setIsSearching(true);
+    setSearchError(null);
+    setContributionData(null);
+    
+    try {
+      console.log("Buscando contribución:", trackingCode);
+      
+      const response = await fetch(`/api/contributions?tracking=${trackingCode}`);
+      console.log("Respuesta de búsqueda:", response.status);
+      
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: Could not search for contribution`);
+      }
+      
+      const data = await response.json();
+      console.log("Datos de respuesta completos:", JSON.stringify(data, null, 2));
+      
+      // La API devuelve { data: [...] } o directamente [...]
+      const contributions = data.data || data;
+      console.log("Contribuciones encontradas:", contributions);
+      
+      if (contributions && contributions.length > 0) {
+        const contribution = contributions[0];
+        console.log("Contribución seleccionada:", contribution);
+        
+        // Verificar si la contribución es de hoy
+        const today = new Date().toISOString().split('T')[0];
+        const contributionDate = new Date(contribution.createdAt).toISOString().split('T')[0];
+        console.log("Fecha de contribución:", contributionDate, "Hoy:", today);
+        
+        if (contributionDate === today) {
+          setContributionData(contribution);
+          setShowTrackingResults(true);
+          
+          // Determinar el progreso basado en el estado
+          if (contribution.estado === 'pendiente' || contribution.trackingState === 'registered') {
+            setProgressStep(0); // Solo registrado
+          } else if (contribution.estado === 'recibido' || contribution.trackingState === 'received') {
+            setProgressStep(1); // Recibido
+          } else if (contribution.estado === 'verificado' || contribution.trackingState === 'verified') {
+            setProgressStep(2); // Verificado
+          } else if (contribution.estado === 'certificado' || contribution.trackingState === 'certified') {
+            setProgressStep(3); // Certificado
+          } else {
+            setProgressStep(0);
+          }
+        } else {
+                            setSearchError(t.notToday);
+        }
+      } else {
+                          setSearchError(t.noContribution);
+      }
+    } catch (error) {
+      console.error("Error buscando contribución:", error);
+                      setSearchError(error instanceof Error ? error.message : t.searchError);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Función para cargar contribuciones de hoy
+  const loadTodayContributions = async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const response = await fetch(`/api/contributions?date=${today}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Contribuciones de hoy:", data);
+        return data;
+      }
+    } catch (error) {
+      console.error("Error cargando contribuciones de hoy:", error);
+    }
+    return [];
+  };
+
   // Loading state
   if (isLoading) {
     return (
@@ -827,7 +938,7 @@ export default function EnvironmentalPassport({ onBack }: EnvironmentalPassportP
               <ArrowLeft className="w-5 h-5 text-gray-700" />
             </button>
             <h1 className="text-xl font-bold text-gray-800 tracking-wider">
-              {t.passport}
+              {t.loading}
             </h1>
             <div className="w-5 h-5" />
           </div>
@@ -876,11 +987,7 @@ export default function EnvironmentalPassport({ onBack }: EnvironmentalPassportP
               <span className="font-medium text-gray-800">Erro</span>
             </div>
             <p className="text-sm text-gray-700 font-light">{error}</p>
-            {process.env.NODE_ENV === 'development' && (
-              <div className="mt-3 text-xs text-gray-600">
-                <strong>Modo de desenvolvimento:</strong> Configure as credenciais do Google OAuth para testar a autenticação real.
-              </div>
-            )}
+
           </div>
         </div>
       </div>
@@ -936,23 +1043,7 @@ export default function EnvironmentalPassport({ onBack }: EnvironmentalPassportP
           </div>
         </div>
         
-        {/* Development Warning */}
-        {error && process.env.NODE_ENV === 'development' && (
-          <div className="w-full max-w-md bg-white/25 backdrop-blur-md border border-white/30 rounded-2xl p-4 mb-6">
-            <div className="flex items-center gap-2 mb-2">
-              <Shield className="w-4 h-4" style={{ color: "#EAB308" }} />
-              <span className="text-sm font-medium text-gray-800">
-                Modo de Desenvolvimento
-              </span>
-            </div>
-            <div className="text-sm text-gray-700">
-              <div className="font-medium">⚠️ {error}</div>
-              <div className="mt-2 text-xs text-gray-600">
-                Para usar autenticação real, configure as credenciais do Google OAuth em .env.local
-              </div>
-            </div>
-          </div>
-        )}
+
 
         {/* Logo INFINITO.me */}
         <div className="w-full flex justify-center mb-6">
@@ -1129,33 +1220,30 @@ export default function EnvironmentalPassport({ onBack }: EnvironmentalPassportP
             >
               <div className="flex items-center gap-3 mb-2">
                 <Leaf className="w-6 h-6" style={{ color: "#689610" }} />
-                <span className="font-bold text-gray-800 tracking-wider">Impacto Ambiental</span>
+                <span className="font-bold text-gray-800 tracking-wider">{t.footprint} {t.environmental}</span>
               </div>
               
-              <div className="flex flex-row items-center justify-around w-full gap-6">
-                <div 
-                  className="flex flex-col items-center flex-1 p-4 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30"
-                  style={{ animation: "pulse-metric 2s ease-in-out infinite" }}
-                >
-                  <Leaf className="w-8 h-8 md:w-10 md:h-10 mb-2" style={{ color: "#689610" }} aria-label={t.co2} />
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-2 mx-auto" style={{ backgroundColor: "#689610" }}>
+                    <Leaf className="w-6 h-6 text-white" />
+                  </div>
                   <span className="text-lg md:text-xl font-bold text-gray-800 tracking-wider">{co2Display} Kg</span>
-                  <span className="text-xs md:text-sm text-gray-600 font-medium">{t.co2}</span>
+                  <p className="text-xs text-gray-600 font-medium">{t.co2} Saved</p>
                 </div>
-                <div 
-                  className="flex flex-col items-center flex-1 p-4 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30"
-                  style={{ animation: "pulse-metric 2s ease-in-out infinite 0.3s" }}
-                >
-                  <Droplets className="w-8 h-8 md:w-10 md:h-10 mb-2" style={{ color: "#43B2D2" }} aria-label={t.water} />
+                <div className="text-center">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-2 mx-auto" style={{ backgroundColor: "#43B2D2" }}>
+                    <Droplets className="w-6 h-6 text-white" />
+                  </div>
                   <span className="text-lg md:text-xl font-bold text-gray-800 tracking-wider">{waterDisplay} LT</span>
-                  <span className="text-xs md:text-sm text-gray-600 font-medium">{t.water}</span>
+                  <p className="text-xs text-gray-600 font-medium">{t.water} Saved</p>
                 </div>
-                <div 
-                  className="flex flex-col items-center flex-1 p-4 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30"
-                  style={{ animation: "pulse-metric 2s ease-in-out infinite 0.6s" }}
-                >
-                  <Zap className="w-8 h-8 md:w-10 md:h-10 mb-2" style={{ color: "#EAB308" }} aria-label={t.resources} />
+                <div className="text-center">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-2 mx-auto" style={{ backgroundColor: "#F47802" }}>
+                    <Zap className="w-6 h-6 text-white" />
+                  </div>
                   <span className="text-lg md:text-xl font-bold text-gray-800 tracking-wider">{resourcesDisplay}%</span>
-                  <span className="text-xs md:text-sm text-gray-600 font-medium">{t.resources}</span>
+                  <p className="text-xs text-gray-600 font-medium">{t.resources}</p>
                 </div>
               </div>
             </div>
@@ -1170,7 +1258,7 @@ export default function EnvironmentalPassport({ onBack }: EnvironmentalPassportP
                 }}
               >
                 <div className="absolute inset-0 opacity-20" style={{ backgroundColor: "#689610" }}></div>
-                <span className="font-semibold text-gray-800 text-xs md:text-sm relative z-10 tracking-wider">Contribuições</span>
+                <span className="font-semibold text-gray-800 text-xs md:text-sm relative z-10 tracking-wider">{t.contributions}</span>
                 <span className="text-xl md:text-2xl font-bold relative z-10" style={{ color: "#689610" }}>
                   {userStats?.contributions ?? 0}
                 </span>
@@ -1183,15 +1271,11 @@ export default function EnvironmentalPassport({ onBack }: EnvironmentalPassportP
                 }}
               >
                 <div className="absolute inset-0 opacity-20" style={{ backgroundColor: "#3E88FF" }}></div>
-                <span className="font-semibold text-gray-800 text-xs md:text-sm relative z-10 tracking-wider">Compras</span>
-                <span className="text-xl md:text-2xl font-bold relative z-10" style={{ color: "#3E88FF" }}>
-                  {userStats?.purchases ?? 0}
-                </span>
+                <span className="font-semibold text-gray-800 text-xs md:text-sm relative z-10 tracking-wider">{t.purchases}</span>
+                  <span className="text-xl md:text-2xl font-bold relative z-10" style={{ color: "#3E88FF" }}>
+                    {userStats?.purchases ?? 0}
+                  </span>
               </div>
-            </div>
-
-            {/* Segunda fila de tarjetas */}
-            <div className="flex w-full justify-between gap-3 mb-6">
               <div 
                 className="flex-1 bg-white/25 backdrop-blur-md rounded-2xl p-4 flex flex-col items-center border border-white/30 relative overflow-hidden"
                 style={{ 
@@ -1200,10 +1284,10 @@ export default function EnvironmentalPassport({ onBack }: EnvironmentalPassportP
                 }}
               >
                 <div className="absolute inset-0 opacity-20" style={{ backgroundColor: "#F47802" }}></div>
-                <span className="font-semibold text-gray-800 text-xs md:text-sm relative z-10 tracking-wider">Vendas</span>
-                <span className="text-xl md:text-2xl font-bold relative z-10" style={{ color: "#F47802" }}>
-                  {userStats?.sales ?? 0}
-                </span>
+                <span className="font-semibold text-gray-800 text-xs md:text-sm relative z-10 tracking-wider">{t.sales}</span>
+                  <span className="text-xl md:text-2xl font-bold relative z-10" style={{ color: "#F47802" }}>
+                    {userStats?.sales ?? 0}
+                  </span>
               </div>
               <div 
                 className="flex-1 bg-white/25 backdrop-blur-md rounded-2xl p-4 flex flex-col items-center border border-white/30 relative overflow-hidden"
@@ -1213,10 +1297,10 @@ export default function EnvironmentalPassport({ onBack }: EnvironmentalPassportP
                 }}
               >
                 <div className="absolute inset-0 opacity-20" style={{ backgroundColor: "#D42D66" }}></div>
-                <span className="font-semibold text-gray-800 text-xs md:text-sm relative z-10 tracking-wider">Donações</span>
-                <span className="text-xl md:text-2xl font-bold relative z-10" style={{ color: "#D42D66" }}>
-                  {userStats?.collectibles ?? 0}
-                </span>
+                <span className="font-semibold text-gray-800 text-xs md:text-sm relative z-10 tracking-wider">{t.collectibles}</span>
+                  <span className="text-xl md:text-2xl font-bold relative z-10" style={{ color: "#D42D66" }}>
+                    {userStats?.collectibles ?? 0}
+                  </span>
               </div>
             </div>
 
@@ -1227,53 +1311,104 @@ export default function EnvironmentalPassport({ onBack }: EnvironmentalPassportP
             >
               <div className="flex items-center gap-3 mb-4">
                 <Search className="w-5 h-5" style={{ color: "#3E88FF" }} />
-                <span className="font-bold text-gray-800 tracking-wider">Seguir contribuição</span>
+                <span className="font-bold text-gray-800 tracking-wider">{t.journey}</span>
               </div>
               <div className="flex gap-3">
                 <input 
                   type="text" 
-                  placeholder="Ex: CON-2024-001"
+                  placeholder="Ex: INF_1753475802913_3ewhghxth"
                   value={trackingNumber}
                   onChange={(e) => setTrackingNumber(e.target.value)}
                   className="flex-1 px-4 py-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl text-gray-800 font-medium tracking-wider placeholder-gray-500 focus:outline-none focus:border-white/60 transition-all duration-300"
                 />
                 <button 
-                  onClick={() => setShowTrackingResults(true)}
-                  className="px-6 py-3 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border border-white/30"
+                  onClick={() => {
+                    if (trackingNumber.trim()) {
+                      searchContribution(trackingNumber.trim());
+                    } else {
+                      setSearchError(t.enterCode);
+                    }
+                  }}
+                  disabled={isSearching}
+                  className="px-6 py-3 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border border-white/30 disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ 
                     backgroundColor: "#3E88FF",
                     filter: "drop-shadow(0 4px 8px rgba(62,136,255,0.3))"
                   }}
                 >
-                  Buscar
+                  {isSearching ? (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Searching...
+                    </div>
+                  ) : (
+                    "Search"
+                  )}
                 </button>
               </div>
+              
+              {/* Mensaje de error */}
+              {searchError && (
+                <div className="mt-3 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg text-sm">
+                  {searchError}
+                </div>
+              )}
               
               {/* Botón de ejemplo para probar */}
               <div className="text-center mt-3">
                 <button 
                   onClick={() => {
-                    setTrackingNumber("CON-2024-001");
-                    setShowTrackingResults(true);
+                    setTrackingNumber("INF_1753475802913_3ewhghxth");
+                    searchContribution("INF_1753475802913_3ewhghxth");
                   }}
                   className="text-xs text-gray-600 hover:text-gray-800 underline font-light"
                 >
-                  Probar con ejemplo: CON-2024-001
+                  {t.tryWith} INF_1753475802913_3ewhghxth
                 </button>
               </div>
             </div>
 
             {/* Timeline de seguimiento */}
-            {showTrackingResults && (
+            {showTrackingResults && contributionData && (
               <div 
                 className="w-full bg-white/25 backdrop-blur-md rounded-2xl p-6 mb-6 border border-white/30"
                 style={{ filter: "drop-shadow(0 6px 12px rgba(104,150,16,0.2))" }}
               >
                 <div className="flex items-center gap-3 mb-6">
                   <Package className="w-5 h-5" style={{ color: "#689610" }} />
-                  <span className="font-bold text-gray-800 tracking-wider">Seguimento #{trackingNumber || "CON-2024-001"}</span>
+                  <span className="font-bold text-gray-800 tracking-wider">Tracking #{contributionData.tracking}</span>
                 </div>
                 
+                {/* Información de la contribución */}
+                <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 mb-6 border border-white/30">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-semibold text-gray-700">Type:</span>
+                      <p className="text-gray-800 capitalize">{contributionData.tipo}</p>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-gray-700">Items:</span>
+                      <p className="text-gray-800">
+                        {contributionData.estado === 'pendiente' ? 'Pending verification' : contributionData.totalItems}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-gray-700">Status:</span>
+                      <p className="text-gray-800 capitalize">{contributionData.estado}</p>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-gray-700">Date:</span>
+                      <p className="text-gray-800">{new Date(contributionData.fecha || contributionData.createdAt).toLocaleDateString('pt-PT')}</p>
+                    </div>
+                  </div>
+                  {contributionData.detalles && (
+                    <div className="mt-3">
+                      <span className="font-semibold text-gray-700">Details:</span>
+                      <p className="text-gray-800 text-sm">{contributionData.detalles}</p>
+                    </div>
+                  )}
+                </div>
+
                 {/* Barra de progreso interactiva */}
                 <div className="mb-6">
                   <div className="relative">
@@ -1337,10 +1472,10 @@ export default function EnvironmentalPassport({ onBack }: EnvironmentalPassportP
                   </div>
                   
                   <div className="text-sm text-gray-700 font-light leading-relaxed">
-                    {progressStep === 0 && "Sua contribuição foi registrada no sistema INFINITO."}
-                    {progressStep === 1 && "Sua contribuição foi recebida em nosso centro de triagem."}
-                    {progressStep === 2 && "Sua contribuição foi verificada e aprovada pelos nossos especialistas."}
-                    {progressStep === 3 && "Certificado blockchain em processamento. Receberá notificação em breve."}
+                                                                {progressStep === 0 && (language === 'pt' ? "Sua contribuição foi registrada no sistema INFINITO." : language === 'es' ? "Tu contribución ha sido registrada en el sistema INFINITO." : "Your contribution has been registered in the INFINITO system.")}
+                      {progressStep === 1 && (language === 'pt' ? "Sua contribuição foi recebida em nosso centro de triagem." : language === 'es' ? "Tu contribución ha sido recibida en nuestro centro de clasificación." : "Your contribution has been received at our sorting center.")}
+                      {progressStep === 2 && (language === 'pt' ? "Sua contribuição foi verificada e aprovada pelos nossos especialistas." : language === 'es' ? "Tu contribución ha sido verificada y aprobada por nuestros expertos." : "Your contribution has been verified and approved by our experts.")}
+                      {progressStep === 3 && (language === 'pt' ? "Certificado blockchain em processamento. Receberá notificação em breve." : language === 'es' ? "Certificado blockchain en procesamiento. Recibirás notificación pronto." : "Blockchain certificate in processing. You will receive notification soon.")}
                   </div>
                 </div>
               </div>
@@ -1480,9 +1615,9 @@ export default function EnvironmentalPassport({ onBack }: EnvironmentalPassportP
                     {transaction.type === 'purchase' && <ShoppingBag className="w-5 h-5" style={{ color: "#3E88FF" }} />}
                     <div className="flex-1">
                       <div className="font-medium text-gray-800 text-sm tracking-wider">
-                        {transaction.type === 'contribution' && 'Contribuição realizada'}
-                        {transaction.type === 'sale' && 'Venda realizada'}
-                        {transaction.type === 'purchase' && 'Compra realizada'}
+                        {transaction.type === 'contribution' && t.contribution}
+                        {transaction.type === 'sale' && t.sale}
+                        {transaction.type === 'purchase' && t.purchase}
                       </div>
                       <div className="text-xs text-gray-600 font-light">{transaction.date}</div>
                     </div>
