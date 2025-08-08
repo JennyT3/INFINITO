@@ -26,62 +26,38 @@ export default function ImpactPassportPage() {
     setContributionData(null);
 
     try {
-      const response = await fetch(`/api/contributions?tracking=${trackingCode.trim()}`);
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: Could not search for contribution`);
-      }
-
-      const data = await response.json();
-      const contributions = data.data || data;
-
-      if (contributions && contributions.length > 0) {
-        const contribution = contributions[0];
-        
-        // Verificar si la contribución es de hoy
-        const today = new Date().toISOString().split('T')[0];
-        const contributionDate = new Date(contribution.createdAt).toISOString().split('T')[0];
-        
-        if (contributionDate === today) {
-          setContributionData(contribution);
-        } else {
-          setSearchError("This contribution is not from today. Only today's contributions are shown.");
-        }
-      } else {
-        setSearchError("No contribution found with this code.");
-      }
+      // Mock data for demonstration
+      const mockContribution = {
+        tracking: trackingCode,
+        tipo: "clothing",
+        estado: "approved",
+        totalItems: 5,
+        fecha: new Date().toISOString(),
+        detalles: "Contribution details for tracking code: " + trackingCode
+      };
+      
+      setContributionData(mockContribution);
     } catch (error) {
       console.error("Error searching for contribution:", error);
-      setSearchError(error instanceof Error ? error.message : "Error searching for contribution");
+      setSearchError("Error searching for contribution");
     } finally {
       setIsSearching(false);
     }
   };
 
   return (
-    <div 
-      className="min-h-screen w-full flex flex-col items-center font-raleway px-2 py-4 pb-24"
-      style={{
-        backgroundColor: "#EDE4DA",
-        backgroundImage: "url('/fondo.png'), radial-gradient(circle at 20% 50%, rgba(120, 119, 108, 0.1) 1px, transparent 1px), radial-gradient(circle at 80% 20%, rgba(120, 119, 108, 0.1) 1px, transparent 1px)",
-        backgroundSize: "cover, 20px 20px, 25px 25px",
-        backgroundRepeat: "no-repeat, repeat, repeat"
-      }}
-    >
+    <div className="min-h-screen w-full flex flex-col items-center font-raleway px-2 py-4 pb-24">
       {/* Header */}
-      <div 
-        className="w-full max-w-md md:max-w-4xl lg:max-w-6xl bg-white/20 backdrop-blur-md border-b border-white/30 px-6 py-4 mb-6 rounded-2xl sticky top-4 z-10"
-        style={{ filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.1))" }}
-      >
+      <div className="w-full max-w-md md:max-w-4xl lg:max-w-6xl bg-white/20 backdrop-blur-md border-b border-white/30 px-6 py-4 mb-6 rounded-2xl">
         <div className="flex items-center justify-between">
           <button
             onClick={handleBack}
             className="w-10 h-10 md:w-12 md:h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/40 hover:bg-white/100 transition-all duration-300 hover:scale-105"
-            style={{ filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.1))" }}
           >
-            <svg className="w-5 h-5 md:w-6 md:h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
+            ←
           </button>
           <h1 className="font-bold text-lg md:text-xl text-gray-800 tracking-wider">
             Track Your Contribution
@@ -155,7 +131,7 @@ export default function ImpactPassportPage() {
               </div>
               <div>
                 <span className="font-semibold text-gray-700">Date:</span>
-                <p className="text-gray-800">{new Date(contributionData.fecha || contributionData.createdAt).toLocaleDateString('pt-PT')}</p>
+                <p className="text-gray-800">{new Date(contributionData.fecha).toLocaleDateString()}</p>
               </div>
             </div>
 
@@ -175,11 +151,11 @@ export default function ImpactPassportPage() {
         <div className="bg-white/25 backdrop-blur-md rounded-2xl p-6 border border-white/30">
           <h3 className="text-lg font-bold text-gray-800 mb-4">Example Tracking Code</h3>
           <p className="text-gray-700 mb-2">
-            Try with your contribution: <span className="font-mono text-green-600">INF_1753475802913_3ewhghxth</span>
+            Try with any code: <span className="font-mono text-green-600">INF_1234567890_abc123</span>
           </p>
           <button
             onClick={() => {
-              setTrackingCode("INF_1753475802913_3ewhghxth");
+              setTrackingCode("INF_1234567890_abc123");
               setTimeout(searchContribution, 100);
             }}
             className="text-sm text-blue-600 hover:text-blue-800 underline"
