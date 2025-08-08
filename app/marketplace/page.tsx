@@ -3,17 +3,15 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '../../components/theme-provider';
 import { 
-	Search, Filter, Heart, ShoppingBag, User, Grid, List, 
-	MapPin, Droplets, Leaf, X, ChevronDown, Smartphone, Bitcoin, 
-	ArrowLeft, Zap, Award, CreditCard, Building2, Star, Plus, Palette
+	Search, Filter, Heart, ShoppingBag, Grid, List, 
+	MapPin, Droplets, Leaf, X, ChevronDown, 
+	ArrowLeft, Zap, Award, CreditCard, Star, Plus
 } from 'lucide-react';
 import InfinitoLayout from '../../components/InfinitoLayout';
 import { useTranslation } from '../../hooks/useTranslation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { PaymentMethodSelector } from "@/components/ui/payment-method-selector";
 import { Button } from "@/components/ui/button";
-import * as React from "react";
-import Image from 'next/image';
 
 const appBackground = {
 	backgroundColor: '#EDE4DA',

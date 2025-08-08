@@ -1,8 +1,6 @@
 "use client";
-import { ArrowLeft, Heart, Gift, Bell, Search, Brain, Palette, Repeat2, BrainCircuit, Network, MapPin, Shirt, Image as ArtIcon, RefreshCw } from "lucide-react";
+import { ArrowLeft, Gift, Shirt, Image as ArtIcon, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
-import BottomNavigationMenu from '../../components/BottomNavigationMenu';
 import { useState, useEffect } from "react";
 import { useTranslation } from '../../hooks/useTranslation';
 
@@ -10,7 +8,6 @@ const BUTTON_SIZE = 140;
 
 export default function ContribuirPage() {
 	const router = useRouter();
-	const [search, setSearch] = useState("");
 	const [selected, setSelected] = useState<number | null>(null);
 	const { t } = useTranslation();
 	const [mounted, setMounted] = useState(false);
@@ -41,13 +38,6 @@ export default function ContribuirPage() {
 			gradient: "from-blue-500 to-cyan-400",
 			link: "/contribuir/receive"
 		}
-	];
-
-	const positions = [
-		{ left: '50%', top: '45%', isPrimary: true },  // Ropa
-		{ left: '25%', top: '25%', isPrimary: false }, // Arte
-		{ left: '75%', top: '25%', isPrimary: false }, // Reciclar
-		{ left: '50%', top: '75%', isPrimary: false }, // Recibir
 	];
 
 	return (
