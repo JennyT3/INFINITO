@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useLanguage } from '../../../components/theme-provider';
-import BottomNavigationMenu from '../../../components/BottomNavigationMenu';
-import EnvironmentalPassport from '../../../components/environmental-passport';
+import { useLanguage } from '@/components/theme-provider';
+import BottomNavigationMenu from '@/components/BottomNavigationMenu';
+import EnvironmentalPassport from '@/components/environmental-passport';
 
 export default function PassportPage() {
   const router = useRouter();
