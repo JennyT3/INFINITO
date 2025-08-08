@@ -93,7 +93,7 @@ export default function ProfilePage() {
       `}</style>
       
       <div 
-        className="min-h-screen font-raleway relative pb-24"
+        className="min-h-screen font-raleway relative pb-24 pt-4"
         style={{
           backgroundColor: "#EDE4DA",
           backgroundImage: "url('/fondo.png'), radial-gradient(circle at 20% 50%, rgba(120, 119, 108, 0.1) 1px, transparent 1px), radial-gradient(circle at 80% 20%, rgba(120, 119, 108, 0.1) 1px, transparent 1px)",

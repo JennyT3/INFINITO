@@ -9,10 +9,12 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const hideStellarWallet = pathname.startsWith('/splash') || pathname.startsWith('/admin');
   
   return (
-    <>
+    <div className="relative">
       {!hideStellarWallet && <StellarWallet />}
-      {children}
+      <div className={!hideStellarWallet ? 'pt-80' : ''}>
+        {children}
+      </div>
       {!hideBottomMenu && <BottomNavigationMenu />}
-    </>
+    </div>
   );
 } 
