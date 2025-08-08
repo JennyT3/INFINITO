@@ -5,7 +5,7 @@ import { useLanguage } from '../../components/theme-provider';
 import { 
 	Search, Filter, Heart, ShoppingBag, Grid, List, 
 	MapPin, Droplets, Leaf, X, ChevronDown, 
-	ArrowLeft, Zap, Award, CreditCard, Star, Plus
+	ArrowLeft, Zap, Award, CreditCard, Star, Plus, Palette
 } from 'lucide-react';
 import InfinitoLayout from '../../components/InfinitoLayout';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -51,27 +51,27 @@ interface Product {
 // Traduções do marketplace
 const marketplaceTranslations = {
 	pt: {
-		title: "Marketplace Sustentável",
-		subtitle: "Produtos verificados com impacto ambiental transparente",
-		searchPlaceholder: "Procurar produtos...",
-		filters: "Filtros",
-		gridView: "Grelha",
-		listView: "Lista",
-		addToCart: "Adicionar ao Carrinho",
-		buyNow: "Comprar Agora",
-		seller: "Vendedor",
-		condition: "Estado",
+		title: "Sustainable Marketplace",
+		subtitle: "Verified products with transparent environmental impact",
+		searchPlaceholder: "Search products...",
+		filters: "Filters",
+		gridView: "Grid",
+		listView: "List",
+		addToCart: "Add to Cart",
+		buyNow: "Buy Now",
+		seller: "Seller",
+		condition: "Condition",
 		material: "Material",
-		origin: "Origem",
-		environmentalImpact: "Impacto Ambiental",
-		co2Saved: "CO₂ Poupado",
-		waterSaved: "Água Poupada",
-		efficiency: "Eficiência",
-		selectPayment: "Selecionar Pagamento",
-		confirmPurchase: "Confirmar Compra",
-		paymentMethod: "Método de Pagamento",
-		processing: "A processar...",
-		close: "Fechar"
+		origin: "Origin",
+		environmentalImpact: "Environmental Impact",
+		co2Saved: "CO₂ Saved",
+		waterSaved: "Water Saved",
+		efficiency: "Efficiency",
+		selectPayment: "Select Payment",
+		confirmPurchase: "Confirm Purchase",
+		paymentMethod: "Payment Method",
+		processing: "Processing...",
+		close: "Close"
 	},
 	en: {
 		title: "Sustainable Marketplace",

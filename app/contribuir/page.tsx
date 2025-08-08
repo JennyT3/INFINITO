@@ -1,12 +1,12 @@
 "use client";
-import { ArrowLeft, Gift, Shirt, Image as ArtIcon, RefreshCw } from "lucide-react";
+import { ArrowLeft, Gift, Shirt, Image as ArtIcon, RefreshCw, MapPin } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useTranslation } from '../../hooks/useTranslation';
 
 const BUTTON_SIZE = 140;
 
-export default function ContribuirPage() {
+export default function ContributePage() {
 	const router = useRouter();
 	const [selected, setSelected] = useState<number | null>(null);
 	const { t } = useTranslation();

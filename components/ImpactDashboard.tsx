@@ -34,14 +34,14 @@ export const ImpactDashboard: React.FC<ImpactDashboardProps> = ({ data }) => {
     <div className="bg-white/60 backdrop-blur-xl rounded-3xl p-6 border border-white/70 shadow-xl">
       <div className="flex items-center gap-2 mb-6">
         <TrendingUp className="w-6 h-6 text-green-600" />
-        <h3 className="text-xl font-bold text-gray-800">Teu Impacto Ambiental</h3>
+        				<h3 className="text-xl font-bold text-gray-800">Your Environmental Impact</h3>
       </div>
 
       {/* Métricas principais com incerteza */}
       <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-600">CO₂ Poupado</span>
+            					<span className="text-sm font-medium text-gray-600">CO₂ Saved</span>
             <div className="flex items-center gap-1">
               <Info className="w-3 h-3 text-gray-400" />
               <span className="text-xs text-gray-400">{uncertainty}</span>
@@ -55,7 +55,7 @@ export const ImpactDashboard: React.FC<ImpactDashboardProps> = ({ data }) => {
 
         <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-600">Água Poupada</span>
+            					<span className="text-sm font-medium text-gray-600">Water Saved</span>
             <div className="flex items-center gap-1">
               <Info className="w-3 h-3 text-gray-400" />
               <span className="text-xs text-gray-400">{uncertainty}</span>

@@ -17,85 +17,85 @@ const steps = [
 ];
 
 export default function ContributeClothingPage() {
-  // Declarar todos los hooks al inicio
+  // Declare all hooks at the beginning
   const [currentStep, setCurrentStep] = useState("start");
-  const [openModal, setOpenModal] = useState(false); // Para el modal de método
-  const [selected, setSelected] = useState<number | null>(null); // Para el paso del mapa
+  const [openModal, setOpenModal] = useState(false); // For method modal
+  const [selected, setSelected] = useState<number | null>(null); // For map step
   const router = useRouter();
   const { t } = useTranslation();
-  // Estado para los datos del formulario de recolha
+  // State for pickup form data
   const [pickupPhone, setPickupPhone] = useState("");
   const [pickupAddress, setPickupAddress] = useState("");
   const [pickupWeight, setPickupWeight] = useState("");
   const [pickupDay, setPickupDay] = useState("");
   const [pickupItems, setPickupItems] = useState("");
-  // Estado para el código generado
+  // State for generated code
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [fullBackendResponse, setFullBackendResponse] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
   
-  // Estado para validación
+  // State for validation
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Función de validación
+  // Validation function
   const validatePickupForm = () => {
     const errors: Record<string, string> = {};
     
-    // Validar teléfono
-    if (!pickupPhone.trim()) {
-      errors.phone = "Phone number is required";
-    } else if (!/^[+]?[0-9\s\-\(\)]{9,15}$/.test(pickupPhone.trim())) {
-      errors.phone = "Invalid phone format";
+      // Validate phone
+  if (!pickupPhone.trim()) {
+    errors.phone = "Phone number is required";
+  } else if (!/^[+]?[0-9\s\-\(\)]{9,15}$/.test(pickupPhone.trim())) {
+    errors.phone = "Invalid phone format";
+  }
+  
+  // Validate address
+  if (!pickupAddress.trim()) {
+    errors.address = "Address is required";
+  } else if (pickupAddress.trim().length < 10) {
+    errors.address = "Address must be at least 10 characters";
+  }
+  
+  // Validate weight
+  if (!pickupWeight.trim()) {
+    errors.weight = "Weight is required";
+  } else {
+    const weight = parseFloat(pickupWeight);
+    if (isNaN(weight) || weight <= 0) {
+      errors.weight = "Weight must be a positive number";
+    } else if (weight < 10) {
+      errors.weight = "Minimum pickup weight is 10kg";
+    } else if (weight > 100) {
+      errors.weight = "Maximum pickup weight is 100kg";
     }
+  }
+  
+  // Validate day
+  if (!pickupDay.trim()) {
+    errors.day = "Pickup day is required";
+  } else {
+    const selectedDate = new Date(pickupDay);
+    const today = new Date();
+    const dayOfWeek = selectedDate.getDay();
     
-    // Validar dirección
-    if (!pickupAddress.trim()) {
-      errors.address = "Address is required";
-    } else if (pickupAddress.trim().length < 10) {
-      errors.address = "Address must be at least 10 characters";
+    if (selectedDate < today) {
+      errors.day = "Date must be in the future";
+    } else if (dayOfWeek !== 2 && dayOfWeek !== 4) { // Tuesday = 2, Thursday = 4
+      errors.day = "Pickup only on Tuesdays and Thursdays";
     }
-    
-    // Validar peso
-    if (!pickupWeight.trim()) {
-      errors.weight = "Weight is required";
-    } else {
-      const weight = parseFloat(pickupWeight);
-      if (isNaN(weight) || weight <= 0) {
-        errors.weight = "Weight must be a positive number";
-      } else if (weight < 10) {
-        errors.weight = "Minimum pickup weight is 10kg";
-      } else if (weight > 100) {
-        errors.weight = "Maximum pickup weight is 100kg";
-      }
-    }
-    
-    // Validar dia
-    if (!pickupDay.trim()) {
-      errors.day = "Pickup day is required";
-    } else {
-      const selectedDate = new Date(pickupDay);
-      const today = new Date();
-      const dayOfWeek = selectedDate.getDay();
-      
-      if (selectedDate < today) {
-        errors.day = "Date must be in the future";
-      } else if (dayOfWeek !== 2 && dayOfWeek !== 4) { // Terça = 2, Quinta = 4
-        errors.day = "Pickup only on Tuesdays and Thursdays";
-      }
-    }
+  }
 
-    // Validar número de items
-    if (!pickupItems.trim()) {
-      errors.items = "Number of items is required";
-    } else {
-      const items = parseInt(pickupItems);
-      if (isNaN(items) || items <= 0) {
-        errors.items = "Number of items must be a positive number";
-      } else if (items > 100) {
-        errors.items = "Maximum number of items is 100";
-      }
+  // Validate number of items
+  if (!pickupItems.trim()) {
+    errors.items = "Number of items is required";
+  } else {
+    const items = parseInt(pickupItems);
+    if (isNaN(items) || items <= 0) {
+      errors.items = "Number of items must be a positive number";
+    } else if (items > 100) {
+      errors.items = "Maximum number of items is 100";
     }
+  }
     
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
@@ -108,10 +108,10 @@ export default function ContributeClothingPage() {
     else setCurrentStep("start");
   };
 
-  // Definir la función antes de su uso en el formulario:
+  // Define the function before its use in the form:
   const handleCreateContribution = async (payload: any) => {
     setError(null);
-    console.log("Creando contribución con payload:", payload);
+    console.log("Creating contribution with payload:", payload);
     
     try {
       const res = await fetch("/api/contributions", {

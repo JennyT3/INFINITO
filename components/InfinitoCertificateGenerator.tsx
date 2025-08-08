@@ -84,9 +84,9 @@ DATA: ${new Date(certificateData.timestamp).toLocaleDateString('pt-PT')}
 CLASSIFICAÇÃO: ${certificateData.classification.toUpperCase()}
 DESTINO: ${certificateData.destination}
 
-IMPACTO AMBIENTAL VERIFICADO:
-- CO₂ poupado: ${certificateData.impacto.co2} kg
-- Água poupada: ${certificateData.impacto.water} L
+		VERIFIED ENVIRONMENTAL IMPACT:
+		- CO₂ saved: ${certificateData.impacto.co2} kg
+		- Water saved: ${certificateData.impacto.water} L
 - Recursos conservados: ${certificateData.impacto.resources}%
 
 CERTIFICAÇÃO DIGITAL:
@@ -159,10 +159,10 @@ Verificação disponível em: https://infinito.me/verify/${certificateData.certi
                 <span className="font-medium">Destino:</span> {contributionData.destination}
               </div>
               <div>
-                <span className="font-medium">CO₂ poupado:</span> {contributionData.co2Saved || 0} kg
+                					<span className="font-medium">CO₂ saved:</span> {contributionData.co2Saved || 0} kg
               </div>
               <div>
-                <span className="font-medium">Água poupada:</span> {contributionData.waterSaved || 0} L
+                					<span className="font-medium">Water saved:</span> {contributionData.waterSaved || 0} L
               </div>
             </div>
           </div>

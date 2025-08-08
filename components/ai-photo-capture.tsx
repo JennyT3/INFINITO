@@ -188,7 +188,7 @@ export default function AIPhotoCapture({ userAction, onAnalysisComplete, onBack 
                 <div className="text-center">
                   <Camera className="w-12 h-12 mx-auto text-gray-400 mb-3" />
                   <p className="text-gray-600">Etiqueta com composição</p>
-                  <p className="text-xs text-gray-500 mt-1">Para análise precisa de material e origem</p>
+                  					<p className="text-xs text-gray-500 mt-1">For accurate material and origin analysis</p>
                 </div>
               )}
             </div>
@@ -248,7 +248,7 @@ export default function AIPhotoCapture({ userAction, onAnalysisComplete, onBack 
                 )}
                 {analysis.country && (
                   <div>
-                    <strong>Origem:</strong> {analysis.country}
+                    							<strong>Origin:</strong> {analysis.country}
                   </div>
                 )}
               </div>

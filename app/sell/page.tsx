@@ -6,9 +6,9 @@ import SellSectionWithAI from '@/components/calculadora-ambiental/SellSectionWit
 import BottomNavigationMenu from '@/components/BottomNavigationMenu';
 
 const translations = {
-  pt: { title: 'Vender Produtos', calculator: 'Calculadora Ambiental', add: 'Adicionar Produto', added: 'produto(s) adicionado(s)', productsAdded: 'Produtos Adicionados', product: 'Produto', condition: 'Bom estado', price: 'Preço', back: 'Voltar', impact: 'Impacto das Tuas Peças' },
+  pt: { title: 'Sell Products', calculator: 'Environmental Calculator', add: 'Add Product', added: 'product(s) added', productsAdded: 'Products Added', product: 'Product', condition: 'Good condition', price: 'Price', back: 'Back', impact: 'Your Items Impact' },
   en: { title: 'Sell Products', calculator: 'Environmental Calculator', add: 'Add Product', added: 'product(s) added', productsAdded: 'Products Added', product: 'Product', condition: 'Good condition', price: 'Price', back: 'Back', impact: 'Your Items Impact' },
-  es: { title: 'Vender Productos', calculator: 'Calculadora Ambiental', add: 'Agregar Producto', added: 'producto(s) añadido(s)', productsAdded: 'Productos Añadidos', product: 'Producto', condition: 'Buen estado', price: 'Precio', back: 'Volver', impact: 'Impacto de tus prendas' },
+  es: { title: 'Sell Products', calculator: 'Environmental Calculator', add: 'Add Product', added: 'product(s) added', productsAdded: 'Products Added', product: 'Product', condition: 'Good condition', price: 'Price', back: 'Back', impact: 'Your Items Impact' },
 };
 
 const SellProductsPage = () => {
@@ -60,11 +60,11 @@ const SellProductsPage = () => {
                 <div className="w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
                   <Star className="w-5 h-5 text-white" />
                 </div>
-                <h2 className="text-sm font-bold text-gray-800">Transforma moda em impacto</h2>
+                <h2 className="text-sm font-bold text-gray-800">Transform fashion into impact</h2>
               </div>
               <p className="text-xs text-gray-600 leading-relaxed">
-                Cada peça que vendes é uma contribuição para um futuro mais sustentável. 
-                Usa nossa IA para otimizar tuas vendas! 🌱
+                Every piece you sell is a contribution to a more sustainable future. 
+                Use our AI to optimize your sales! 🌱
               </p>
             </div>
           </div>
@@ -83,7 +83,7 @@ const SellProductsPage = () => {
               
               <div className="text-center">
                 <h1 className="text-2xl font-bold text-gray-800 tracking-wider">{t.title}</h1>
-                <p className="text-sm text-gray-600">Transforme suas peças em impacto sustentável</p>
+                <p className="text-sm text-gray-600">Transform your items into sustainable impact</p>
               </div>
               
               <div className="w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/40">
