@@ -678,7 +678,7 @@ export default function ContributeClothingPage() {
             </div>
             <button
               onClick={async () => {
-                if (selected !== null) {
+                if (selected !== null && selected >= 0) {
                   const points = [
                     { name: "Vila Real Center", lat: 41.1511, lng: -7.8029 },
                     { name: "Municipal Library", lat: 41.3086, lng: -7.7461 },
@@ -686,15 +686,17 @@ export default function ContributeClothingPage() {
                   ];
                   const selectedPoint = points[selected];
                   
-                  const payload = {
-                    tipo: "clothing",
-                    nome: `Delivery to ${selectedPoint.name}`,
-                    totalItems: 5, // Default value for map delivery
-                    detalles: `Pickup point: ${selectedPoint.name} (${selectedPoint.lat}, ${selectedPoint.lng})`,
-                    estado: "pending"
-                  };
-                  
-                  await handleCreateContribution(payload);
+                  if (selectedPoint) {
+                    const payload = {
+                      tipo: "clothing",
+                      nome: `Delivery to ${selectedPoint.name}`,
+                      totalItems: 5, // Default value for map delivery
+                      detalles: `Pickup point: ${selectedPoint.name} (${selectedPoint.lat}, ${selectedPoint.lng})`,
+                      estado: "pending"
+                    };
+                    
+                    await handleCreateContribution(payload);
+                  }
                 }
               }}
               disabled={selected===null}

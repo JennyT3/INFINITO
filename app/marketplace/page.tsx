@@ -298,73 +298,90 @@ export default function MarketplacePage() {
 
 	// Componente de produto
 	const ProductCard = ({ product }: { product: Product }) => (
-		<div className="group bg-white/90 border border-gray-200 rounded-2xl shadow-lg flex flex-col overflow-hidden max-w-sm mx-auto mb-6 px-2 py-2 md:px-0 md:py-0" style={{ minWidth: 0, width: 340, minHeight: 340 }}>
-			{/* Imagen grande y precio destacado */}
-			<div className="relative w-full flex items-start" style={{ minHeight: 220 }}>
+		<div className="group bg-white/90 border border-gray-200 rounded-xl shadow-lg flex flex-col overflow-hidden max-w-xs mx-auto mb-4" style={{ minWidth: 0, width: 280, minHeight: 280 }}>
+			{/* Imagen y precio */}
+			<div className="relative w-full flex items-start" style={{ minHeight: 160 }}>
 				<Image
 					src={product.image}
 					alt={product.name}
-					width={280}
-					height={220}
-					className="object-contain h-[220px] w-[280px] rounded-2xl bg-white ml-2 md:h-[260px] md:w-[320px]"
+					width={240}
+					height={160}
+					className="object-contain h-[160px] w-[240px] rounded-xl bg-white ml-2"
 					priority
 				/>
-				{/* Precio destacado (esquina superior derecha, todo naranja, texto negro) */}
-				<div className="absolute top-2 right-4 z-20">
-					<div className="flex items-center bg-[#F47802] border-2 border-[#F47802] rounded-xl px-6 py-1 shadow-xl font-extrabold text-xl text-black">
+				{/* Precio destacado */}
+				<div className="absolute top-2 right-3 z-20">
+					<div className="flex items-center bg-[#F47802] border border-[#F47802] rounded-lg px-3 py-1 shadow-lg font-bold text-sm text-black">
 						<span className="mr-1">{product.price.replace(/\s?USDC/, '')}</span>
 						<span className="text-black font-bold">USDC</span>
 					</div>
 				</div>
 			</div>
-			{/* Primera línea: punto color + nombre prenda + género + talle (sin precio aquí) */}
-			<div className="flex items-center gap-2 mt-4 px-6">
-				<span className="w-3 h-3 rounded-full" style={{ backgroundColor: product.colorCode }}></span>
-				<span className="font-bold text-xl text-gray-900 truncate">{product.type} - {product.gender} - {product.size}</span>
-			</div>
-			{/* Segunda línea: material */}
-			<div className="px-6 text-sm text-gray-600 mt-1">
-				<span className="flex items-center gap-1"><Palette className="w-5 h-5 text-[#813684]" />{product.material}</span>
-			</div>
-			{/* Made in */}
-			<div className="px-6 flex items-center gap-2 text-sm text-gray-600 mt-1">
-				<Building2 className="w-5 h-5 text-[#689610]" />
-				<span className="font-medium">Made in {product.country}</span>
-			</div>
-			{/* Tercera línea: vendedor y calificación */}
-			<div className="px-6 flex items-center gap-3 text-sm text-gray-600 mt-1">
-				<span className="flex items-center gap-1"><User className="w-5 h-5 text-[#D42D66]" />{product.seller}</span>
-				<span className="flex items-center gap-1 text-yellow-400"><Star className="w-5 h-5" />4.5</span>
-			</div>
-			{/* Cuarta línea: ubicación */}
-			<div className="px-6 flex items-center gap-1 text-sm text-gray-600 mt-1 mb-1">
-				<MapPin className="w-5 h-5 text-[#43B2D2]" />
-				<span>{product.city}, {product.country}</span>
-			</div>
-			{/* Impacto ambiental destacado */}
-			<div className="bg-white border border-[#43B2D2] rounded-xl shadow flex flex-col items-center px-6 py-4 mt-3 mx-6 mb-4">
-				<span className="font-bold text-base text-gray-800 mb-2">Pegada ambiental</span>
-				<div className="flex w-full items-center justify-between">
-					<div className="flex flex-col items-center flex-1">
-						<Leaf className="w-7 h-7 text-[#689610] mb-1" />
-						<span className="font-bold text-lg text-gray-800">{product.environmental.co2}</span>
-						<span className="text-xs text-gray-500">CO₂</span>
-					</div>
-					<div className="flex flex-col items-center flex-1">
-						<Droplets className="w-7 h-7 text-[#3E88FF] mb-1" />
-						<span className="font-bold text-lg text-gray-800">{product.environmental.water}</span>
-						<span className="text-xs text-gray-500">Água</span>
+			
+			{/* Información del producto */}
+			<div className="p-4 space-y-2">
+				{/* Nombre y tipo */}
+				<div className="flex items-center gap-2">
+					<span className="w-2 h-2 rounded-full" style={{ backgroundColor: product.colorCode }}></span>
+					<span className="font-semibold text-sm text-gray-900 truncate">{product.type} - {product.gender}</span>
+				</div>
+				
+				{/* Material y país */}
+				<div className="flex items-center justify-between text-xs text-gray-600">
+					<span className="flex items-center gap-1">
+						<Palette className="w-3 h-3 text-[#813684]" />
+						{product.material}
+					</span>
+					<span className="flex items-center gap-1">
+						<Building2 className="w-3 h-3 text-[#689610]" />
+						{product.country}
+					</span>
+				</div>
+				
+				{/* Vendedor y calificación */}
+				<div className="flex items-center justify-between text-xs text-gray-600">
+					<span className="flex items-center gap-1">
+						<User className="w-3 h-3 text-[#D42D66]" />
+						{product.seller}
+					</span>
+					<span className="flex items-center gap-1 text-yellow-400">
+						<Star className="w-3 h-3" />
+						4.5
+					</span>
+				</div>
+				
+				{/* Ubicación */}
+				<div className="flex items-center gap-1 text-xs text-gray-600">
+					<MapPin className="w-3 h-3 text-[#43B2D2]" />
+					<span>{product.city}, {product.country}</span>
+				</div>
+				
+				{/* Impacto ambiental compacto */}
+				<div className="bg-gray-50 border border-[#43B2D2] rounded-lg p-3 mt-3">
+					<span className="font-semibold text-xs text-gray-800 mb-2 block">Environmental Impact</span>
+					<div className="flex items-center justify-between">
+						<div className="flex flex-col items-center">
+							<Leaf className="w-4 h-4 text-[#689610] mb-1" />
+							<span className="font-bold text-sm text-gray-800">{product.environmental.co2}</span>
+							<span className="text-xs text-gray-500">CO₂</span>
+						</div>
+						<div className="flex flex-col items-center">
+							<Droplets className="w-4 h-4 text-[#3E88FF] mb-1" />
+							<span className="font-bold text-sm text-gray-800">{product.environmental.water}</span>
+							<span className="text-xs text-gray-500">Water</span>
+						</div>
 					</div>
 				</div>
-			</div>
-			{/* Botón comprar grande */}
-			<div className="px-6 pb-6">
-				<button 
-					onClick={() => handleBuyNow(product)}
-					className="w-full bg-[#689610] text-white rounded-xl py-3 font-bold text-base hover:bg-[#3E88FF] transition shadow-lg"
-				>
-					Comprar
-				</button>
+				
+				{/* Botón comprar */}
+				<div className="pt-2">
+					<button 
+						onClick={() => handleBuyNow(product)}
+						className="w-full bg-[#689610] text-white rounded-lg py-2 font-semibold text-sm hover:bg-[#3E88FF] transition shadow-md"
+					>
+						Buy Now
+					</button>
+				</div>
 			</div>
 		</div>
 	);
@@ -430,7 +447,7 @@ export default function MarketplacePage() {
 			</div>
 
 			{/* Grid de produtos */}
-			<div className={`grid ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-4' : 'grid-cols-1'} gap-6`}>
+							<div className={`grid ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' : 'grid-cols-1'} gap-4`}>
 				{forcedProducts.map((product) => (
 					<ProductCard key={product.id} product={product} />
 				))}
