@@ -3,6 +3,7 @@ import { ReactNode } from 'react';
 import { ArrowLeft, Search, Bell, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import BottomNavigationMenu from './BottomNavigationMenu';
+import StellarWallet from './StellarWallet';
 import Image from 'next/image';
 
 interface InfinitoLayoutProps {
@@ -17,6 +18,7 @@ interface InfinitoLayoutProps {
 	headerActions?: ReactNode;
 	className?: string;
 	userName?: string;
+	showWallet?: boolean;
 }
 
 export default function InfinitoLayout({
@@ -30,7 +32,8 @@ export default function InfinitoLayout({
 	showEarthAnimation = false,
 	headerActions,
 	className = "",
-	userName = "User"
+	userName = "User",
+	showWallet = true
 }: InfinitoLayoutProps) {
 	const router = useRouter();
 
@@ -83,8 +86,14 @@ export default function InfinitoLayout({
 									<ArrowLeft className="w-5 h-5 md:w-6 md:h-6 text-gray-700" />
 								</button>
 							) : <div className="w-10 md:w-12"></div>}
+							
 							<h1 className="font-bold text-lg md:text-xl text-gray-800 tracking-wider text-center flex-1">{title}</h1>
-							<div className="w-10 md:w-12"></div>
+							
+							{showWallet ? (
+								<div className="w-10 md:w-12 flex justify-end">
+									<StellarWallet isHeader={true} />
+								</div>
+							) : <div className="w-10 md:w-12"></div>}
 						</div>
 					</div>
 				)}
@@ -157,26 +166,6 @@ export default function InfinitoLayout({
 				<div className="absolute top-1/2 right-6 w-2.5 h-2.5 rounded-full opacity-35 animate-pulse infinito-orange" style={{ animationDelay: '0.5s' }} />
 				<div className="absolute bottom-1/3 left-4 w-2 h-2 rounded-full opacity-30 animate-pulse infinito-pink" style={{ animationDelay: '0.7s' }} />
 				<div className="absolute top-2/3 left-1/4 w-1.5 h-1.5 rounded-full opacity-25 animate-pulse infinito-yellow" style={{ animationDelay: '0.3s' }} />
-				<div className="absolute bottom-1/4 right-1/4 w-2 h-2 rounded-full opacity-35 animate-pulse infinito-cyan" style={{ animationDelay: '0.8s' }} />
-				<div className="absolute top-1/4 right-1/3 w-1.5 h-1.5 rounded-full opacity-20 animate-pulse infinito-purple" style={{ animationDelay: '0.4s' }} />
-				
-				{/* Símbolo infinito sutil */}
-				<div className="absolute top-1/4 left-1/3 opacity-10 rotate-12 animate-pulse" style={{ animationDelay: '2s' }}>
-					<svg width="40" height="20" viewBox="0 0 40 20" fill="none">
-						<path d="M10 10C10 4.48 14.48 0 20 0C25.52 0 30 4.48 30 10C30 15.52 25.52 20 20 20C14.48 20 10 15.52 10 10ZM10 10C10 15.52 5.52 20 0 20C-5.52 20 -10 15.52 -10 10C-10 4.48 -5.52 0 0 0C5.52 0 10 4.48 10 10Z" fill="url(#infinito-gradient)"/>
-						<defs>
-							<linearGradient id="infinito-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-								<stop offset="0%" stopColor="#689610"/>
-								<stop offset="16.66%" stopColor="#3E88FF"/>
-								<stop offset="33.33%" stopColor="#D42D66"/>
-								<stop offset="50%" stopColor="#EAB308"/>
-								<stop offset="66.66%" stopColor="#F47802"/>
-								<stop offset="83.33%" stopColor="#43B2D2"/>
-								<stop offset="100%" stopColor="#813684"/>
-							</linearGradient>
-						</defs>
-					</svg>
-				</div>
 
 				{/* Bottom Navigation Menu */}
 				{showBottomMenu && <BottomNavigationMenu />}

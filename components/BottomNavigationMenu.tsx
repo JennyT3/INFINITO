@@ -18,14 +18,14 @@ export default function BottomNavigationMenu() {
 	const navItems = [
 		{
 			id: 'share',
-			icon: <Share2 className="w-7 h-7" />,
+			icon: <Share2 className="w-5 h-5" />,
 			label: 'Share',
 			path: '/share',
 			color: '#43B2D2'
 		},
 		{
 			id: 'sell',
-			icon: <Tag className="w-7 h-7" />,
+			icon: <Tag className="w-5 h-5" />,
 			label: 'Sell',
 			path: '/profile/sell-products',
 			color: '#F47802'
@@ -40,14 +40,14 @@ export default function BottomNavigationMenu() {
 		},
 		{
 			id: 'marketplace',
-			icon: <ShoppingBag className="w-7 h-7" />,
+			icon: <ShoppingBag className="w-5 h-5" />,
 			label: 'Marketplace',
 			path: '/marketplace',
 			color: '#813684'
 		},
 		{
 			id: 'profile',
-			icon: <User className="w-7 h-7" />,
+			icon: <User className="w-5 h-5" />,
 			label: 'Profile',
 			path: '/profile',
 			color: '#D42D66'
@@ -91,88 +91,74 @@ export default function BottomNavigationMenu() {
 			<div className="fixed bottom-0 left-0 right-0 z-50">
 				{/* Fundo com glassmorphism */}
 				<div 
-					className="infinito-glass-strong border-t border-white/30 px-6 py-4 shadow-2xl"
+					className="infinito-glass-strong border-t border-white/30 px-4 py-2 shadow-2xl"
 					style={{
 						backdropFilter: 'blur(20px)',
 						WebkitBackdropFilter: 'blur(20px)',
 						background: 'linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 100%)'
 					}}
 				>
-					<div className="max-w-sm mx-auto flex justify-around items-center">
-						{navItems.map((item) => {
-							const isActive = isActiveRoute(item.path);
-							
-							return (
-								<button 
-									key={item.id}
-									onClick={() => handleClick(item.path)}
-									className={`nav-item flex flex-col items-center gap-1 p-3 rounded-2xl transition-all duration-300 ${
-										isActive ? 'active' : ''
-									}`}
-									style={{
-										filter: isActive 
-											? `drop-shadow(0 4px 12px ${item.color}40)`
-											: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
-									}}
-								>
-									{/* Ícone ou Logo */}
-									<div 
-										className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 ${
-											item.isLogo ? 'shadow-lg' : (isActive ? 'shadow-lg' : 'shadow-sm')
-										}`}
-										style={{
-											backgroundColor: item.isLogo ? 'rgba(0,0,0,0)' : (isActive ? item.color : 'rgba(255,255,255,0.8)'),
-											border: item.isLogo ? 'none' : (isActive ? 'none' : '1px solid rgba(255,255,255,0.5)')
-										}}
-									>
-										{item.isLogo ? (
-											<Image 
-												src="/LOGO3.png" 
-												alt="INFINITO Logo" 
-												width={24}
-												height={24}
-												className="w-6 h-6 object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.18)]"
-												style={{ filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.18))', background: 'none' }}
-											/>
-										) : (
+					<div className="flex items-center justify-around max-w-sm mx-auto md:max-w-4xl lg:max-w-6xl">
+						{navItems.map((item) => (
+							<button
+								key={item.id}
+								onClick={() => handleClick(item.path)}
+								className={`nav-item flex flex-col items-center justify-center gap-1 px-2 py-1 rounded-lg transition-all duration-300 ${
+									isActiveRoute(item.path) 
+										? 'active bg-white/40 backdrop-blur-sm' 
+										: 'hover:bg-white/20 backdrop-blur-sm'
+								}`}
+								style={{
+									filter: isActiveRoute(item.path) 
+										? "drop-shadow(0 4px 8px rgba(0,0,0,0.2))" 
+										: "drop-shadow(0 2px 4px rgba(0,0,0,0.1))"
+								}}
+							>
+								{item.isLogo ? (
+									<div className="relative">
+										<Image
+											src="/LOGO1.svg"
+											alt="INFINITO"
+											width={24}
+											height={24}
+											className="w-6 h-6"
+											style={{
+												filter: isActiveRoute(item.path) 
+													? "drop-shadow(0 2px 4px rgba(104,150,16,0.6))" 
+													: "drop-shadow(0 1px 2px rgba(104,150,16,0.3))"
+											}}
+										/>
+										{isActiveRoute(item.path) && (
 											<div 
-												className="transition-colors duration-300"
-												style={{ color: isActive ? 'white' : item.color }}
-											>
-												{item.icon}
-											</div>
+												className="absolute inset-0 rounded-full animate-glow"
+												style={{ 
+													background: "radial-gradient(circle at center, rgba(104,150,16,0.3) 0%, transparent 70%)"
+												}}
+											/>
 										)}
 									</div>
-
-									{/* Label */}
-									<span 
-										className={`text-base font-semibold transition-colors duration-300 ${
-											isActive ? 'text-gray-800' : 'text-gray-600'
-										}`}
-										style={{
-											color: isActive ? item.color : undefined
-										}}
+								) : (
+									<div 
+										className="flex items-center justify-center"
+										style={{ color: isActiveRoute(item.path) ? item.color : '#6B7280' }}
 									>
-										{item.label}
-									</span>
-
-									{/* Indicador ativo */}
-									{isActive && (
-										<div 
-											className="w-1 h-1 rounded-full mt-1 animate-pulse"
-											style={{ backgroundColor: item.color }}
-										/>
-									)}
-								</button>
-							);
-						})}
+										{item.icon}
+									</div>
+								)}
+								
+								<span 
+									className={`text-xs font-medium tracking-wider ${
+										isActiveRoute(item.path) 
+											? 'text-gray-800 font-bold' 
+											: 'text-gray-600'
+									}`}
+								>
+									{item.label}
+								</span>
+							</button>
+						))}
 					</div>
 				</div>
-
-				{/* Efeitos de fundo no menu */}
-				<div className="absolute bottom-2 left-4 w-1 h-1 rounded-full opacity-30 animate-pulse infinito-green" />
-				<div className="absolute bottom-2 right-4 w-1 h-1 rounded-full opacity-30 animate-pulse infinito-blue" style={{ animationDelay: '0.5s' }} />
-				<div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-0.5 h-0.5 rounded-full opacity-20 animate-pulse infinito-pink" style={{ animationDelay: '1s' }} />
 			</div>
 		</>
 	);
