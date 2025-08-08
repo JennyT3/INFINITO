@@ -2,10 +2,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '../../components/theme-provider';
+import Image from 'next/image';
 import { 
 	Search, Filter, Heart, ShoppingBag, Grid, List, 
 	MapPin, Droplets, Leaf, X, ChevronDown, 
-	ArrowLeft, Zap, Award, CreditCard, Star, Plus, Palette
+	ArrowLeft, Zap, Award, CreditCard, Star, Plus, Palette, Building2
 } from 'lucide-react';
 import InfinitoLayout from '../../components/InfinitoLayout';
 import { useTranslation } from '../../hooks/useTranslation';
