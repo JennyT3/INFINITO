@@ -52,7 +52,7 @@ const SellProductsPage = () => {
         {/* Componente principal - visual minimalista y armónico */}
         <div className="w-full max-w-2xl mx-auto px-4">
           <div className="bg-white/80 rounded-2xl shadow-xl p-4 mb-8">
-            <SellSectionWithAI language={language} t={t} />
+            <SellSectionWithAI tracking="" />
           </div>
         </div>
       </div>
