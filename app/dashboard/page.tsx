@@ -102,22 +102,7 @@ export default function DashboardPage() {
 		</svg>
 	);
 
-	const searchPages = [
-		{ label: t('contribute'), path: '/contribuir' },
-		{ label: t('buy'), path: '/marketplace' },
-		{ label: t('sell'), path: '/profile/sell-products' },
-		{ label: t('footprint'), path: '/profile/impact-passport' },
-		{ label: t('calcTitle'), path: '/calculadora-ambiental' },
-		{ label: t('profile.myOrders'), path: '/profile' },
-		{ label: t('dashboard'), path: '/dashboard' },
-		{ label: t('certificates'), path: '/profile/certificate-generator' },
-	];
-	const [search, setSearch] = useState('');
-	const [showSuggestions, setShowSuggestions] = useState(false);
-	const inputRef = useRef(null);
-	const filteredPages = search
-		? searchPages.filter(p => p.label.toLowerCase().includes(search.toLowerCase()))
-		: [];
+
 
 	// Animaciones CSS para la Tierra y los botones futuristas
 	const dashboardStyles = `
@@ -195,40 +180,8 @@ export default function DashboardPage() {
 					</div>
 				</div>
 				{/* Columna derecha: Contenido */}
-				<div className="flex-1 flex flex-col items-center md:items-start justify-center md:justify-start pt-6 md:pt-16 gap-6 md:gap-8 max-w-xl mx-auto w-full">
-					<h1 className="text-2xl md:text-4xl font-light text-gray-700 tracking-infinito-wide mb-2 text-center md:text-left" style={{ fontFamily: 'Raleway, sans-serif' }}>{t('whatDo')}</h1>
-					{/* Buscador */}
-					<div className="w-full flex items-center justify-center md:justify-start mb-4">
-						<div className="relative w-full max-w-xs">
-							<input
-								ref={inputRef}
-								type="text"
-								value={search}
-								onChange={e => { setSearch(e.target.value); setShowSuggestions(true); }}
-								onFocus={() => setShowSuggestions(true)}
-								onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-								placeholder={t('search' as any) || 'Buscar...'}
-								className="w-full rounded-xl border border-[#b6c97a] bg-white/80 px-4 py-2 pr-10 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#b6c97a] shadow-sm font-raleway"
-								style={{ fontSize: '1rem' }}
-							/>
-							<span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#b6c97a]">
-								<svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-							</span>
-							{showSuggestions && filteredPages.length > 0 && (
-								<div className="absolute left-0 right-0 mt-2 bg-white border border-[#b6c97a] rounded-xl shadow-lg z-20 overflow-hidden">
-									{filteredPages.map((p, idx) => (
-										<button
-											key={p.path}
-											onMouseDown={e => { e.preventDefault(); setShowSuggestions(false); setSearch(''); router.push(p.path); }}
-											className={`w-full text-left px-4 py-2 hover:bg-[#b6c97a]/10 text-gray-800 font-raleway ${idx !== filteredPages.length - 1 ? 'border-b border-[#e2d3c3]' : ''}`}
-										>
-											{p.label}
-										</button>
-									))}
-								</div>
-							)}
-						</div>
-					</div>
+				<div className="flex-1 flex flex-col items-center md:items-start justify-center md:justify-start pt-8 md:pt-20 gap-8 max-w-xl mx-auto w-full">
+					<h1 className="text-2xl md:text-4xl font-light text-gray-700 tracking-infinito-wide mb-6 text-center md:text-left" style={{ fontFamily: 'Raleway, sans-serif' }}>{t('whatDo')}</h1>
 					{/* Botones principales */}
 					<div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full mb-2">
 						{mainActions.map((action) => (

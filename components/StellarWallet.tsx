@@ -8,7 +8,7 @@ export default function StellarWallet() {
   const [balance] = useState("1,250.50 XLM");
 
   return (
-    <div className="fixed top-4 right-4 z-50">
+    <div className="fixed top-20 right-4 z-50">
       <div className="bg-white/90 backdrop-blur-md border border-white/30 rounded-xl shadow-lg">
         <div className="flex items-center gap-2 px-3 py-2">
           <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
