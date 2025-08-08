@@ -11,7 +11,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   return (
     <div className="relative">
       {!hideStellarWallet && <StellarWallet />}
-      <div className={!hideStellarWallet ? 'pt-80' : ''}>
+      <div className={!hideStellarWallet ? 'pt-24' : ''}>
         {children}
       </div>
       {!hideBottomMenu && <BottomNavigationMenu />}

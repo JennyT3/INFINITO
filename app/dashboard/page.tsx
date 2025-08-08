@@ -148,7 +148,7 @@ export default function DashboardPage() {
 	`;
 
 	return (
-		<div className="min-h-screen bg-[#EDE4DA] bg-[url('/fondo.png')] bg-cover bg-center pb-20 font-raleway overflow-y-auto flex flex-col pt-4">
+		<div className="min-h-screen bg-[#EDE4DA] bg-[url('/fondo.png')] bg-cover bg-center pb-20 font-raleway overflow-y-auto flex flex-col">
 			{/* Header superior */}
 			<div className="flex justify-between items-center px-8 pt-8 pb-4">
 				<div className="bg-white/70 border border-[#b6c97a] rounded-xl px-6 py-3 flex items-center gap-4 shadow-sm" style={{ minWidth: 220 }}>
