@@ -58,28 +58,28 @@ export default function DashboardPage() {
 	// Banner de publicidad aleatorio
 	const banners = [
 		{
-			text: t('bannerTitle'),
-			subtitle: t('bannerSubtitle'),
+			text: "Stellar Network",
+			subtitle: "Fast & Sustainable Payments",
+			color: '#813684',
+			bg: 'from-purple-200 to-pink-50'
+		},
+		{
+			text: "USDC Payments",
+			subtitle: "Stable & Secure",
+			color: '#43B2D2',
+			bg: 'from-blue-200 to-cyan-50'
+		},
+		{
+			text: "MoneyGram",
+			subtitle: "Global Transfers",
+			color: '#F47802',
+			bg: 'from-orange-200 to-red-50'
+		},
+		{
+			text: "Environmental Impact",
+			subtitle: "Track Your Contribution",
 			color: '#689610',
-			bg: 'from-green-200 to-green-50'
-		},
-		{
-			text: t('bannerRecycle'),
-			subtitle: t('bannerNFT'),
-			color: '#3E88FF',
-			bg: 'from-blue-200 to-blue-50'
-		},
-		{
-			text: t('bannerImpact'),
-			subtitle: t('bannerEachPiece'),
-			color: '#D42D66',
-			bg: 'from-pink-200 to-pink-50'
-		},
-		{
-			text: t('bannerCalc'),
-			subtitle: t('bannerDiscover'),
-			color: '#EAB308',
-			bg: 'from-yellow-200 to-yellow-50'
+			bg: 'from-green-200 to-emerald-50'
 		}
 	];
 	const [bannerIdx, setBannerIdx] = useState(0);

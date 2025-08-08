@@ -132,7 +132,7 @@ const sampleProducts: Product[] = [
 		size: "M",
 		color: "Azul",
 		colorCode: "#3E88FF",
-		price: "25 €",
+		price: "25 USDC",
 		material: "Algodão Orgânico",
 		country: "Portugal",
 		city: "Porto",
@@ -152,7 +152,7 @@ const sampleProducts: Product[] = [
 		size: "S",
 		color: "Verde",
 		colorCode: "#689610",
-		price: "45 €",
+		price: "45 USDC",
 		material: "Poliéster Reciclado",
 		country: "França",
 		city: "Lyon",
@@ -172,7 +172,7 @@ const sampleProducts: Product[] = [
 		size: "L",
 		color: "Azul Escuro",
 		colorCode: "#1e3a8a",
-		price: "65 €",
+		price: "65 USDC",
 		material: "Algodão Orgânico + Elastano",
 		country: "Espanha",
 		city: "Barcelona",
@@ -192,7 +192,7 @@ const sampleProducts: Product[] = [
 		size: "XL",
 		color: "Cinza",
 		colorCode: "#6b7280",
-		price: "85 €",
+		price: "85 USDC",
 		material: "Lã Merino Certificada",
 		country: "Irlanda",
 		city: "Dublin",
@@ -236,7 +236,7 @@ export default function MarketplacePage() {
 						size: p.size || 'M',
 						color: p.color || 'Variado',
 						colorCode: '#3E88FF',
-						price: typeof p.price === 'number' ? `${p.price} €` : (p.price ?? ''),
+						price: typeof p.price === 'number' ? `${p.price} USDC` : (p.price ?? ''),
 						material: p.material ?? '',
 						country: p.country ?? '',
 						city: '',
@@ -267,7 +267,7 @@ export default function MarketplacePage() {
 	// Fuerza el precio a 2 € y ajusta datos de ejemplo
 	const forcedProducts = products.map((p, i) => ({
 		...p,
-		price: '2 €',
+		price: '2 USDC',
 		country: 'Portugal',
 		city: ['Vila Real', 'Porto', 'Braga', 'Chaves', 'Peso da Régua', 'Sabrosa', 'Murça', 'Alijó'][i % 8],
 		material: p.material.includes('+') ? p.material.replace(/\+\s?/g, match => `+ ${Math.floor(80 - i*10)}% `) + `${20 + i*10}%` : p.material
@@ -312,8 +312,8 @@ export default function MarketplacePage() {
 				{/* Precio destacado (esquina superior derecha, todo naranja, texto negro) */}
 				<div className="absolute top-2 right-4 z-20">
 					<div className="flex items-center bg-[#F47802] border-2 border-[#F47802] rounded-xl px-6 py-1 shadow-xl font-extrabold text-xl text-black">
-						<span className="mr-1">{product.price.replace(/\s?€/, '')}</span>
-						<span className="text-black font-bold">€</span>
+						<span className="mr-1">{product.price.replace(/\s?USDC/, '')}</span>
+						<span className="text-black font-bold">USDC</span>
 					</div>
 				</div>
 			</div>
