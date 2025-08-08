@@ -121,13 +121,12 @@ export default function DashboardPage() {
 
 	// Animaciones CSS para la Tierra y los botones futuristas
 	const dashboardStyles = `
-	@keyframes earth-rotation-3d {
-		0% { transform: rotateY(0deg) rotateX(18deg); }
-		100% { transform: rotateY(360deg) rotateX(18deg); }
+	@keyframes earth-rotation {
+		0% { transform: rotate(0deg); }
+		100% { transform: rotate(360deg); }
 	}
 	.earth-rotation {
-		animation: earth-rotation-3d 18s linear infinite;
-		transform-style: preserve-3d;
+		animation: earth-rotation 18s linear infinite;
 		will-change: transform;
 	}
 	.futuristic-btn {
