@@ -3,7 +3,6 @@ import { ReactNode } from 'react';
 import { ArrowLeft, Search, Bell, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import BottomNavigationMenu from './BottomNavigationMenu';
-import StellarWallet from './StellarWallet';
 import Image from 'next/image';
 
 interface InfinitoLayoutProps {
@@ -89,11 +88,7 @@ export default function InfinitoLayout({
 							
 							<h1 className="font-bold text-lg md:text-xl text-gray-800 tracking-wider text-center flex-1">{title}</h1>
 							
-							{showWallet ? (
-								<div className="w-10 md:w-12 flex justify-end">
-									<StellarWallet isHeader={true} />
-								</div>
-							) : <div className="w-10 md:w-12"></div>}
+							<div className="w-10 md:w-12"></div>
 						</div>
 					</div>
 				)}
