@@ -573,32 +573,32 @@ export default function ContributeClothingPage() {
 			showLogo={true}
 			userName="User"
 		>
-			<div className="flex-1 w-full flex flex-col items-center justify-start pt-10 overflow-y-auto pb-40 bg-[#EDE4DA] bg-[url('/fondo.png')] bg-cover bg-center">
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-2xl mt-0">
+			<div className="flex-1 w-full flex flex-col items-center justify-start pt-6 overflow-y-auto pb-20 bg-[#EDE4DA] bg-[url('/fondo.png')] bg-cover bg-center">
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-xl mt-0">
 					{/* Card Pickup Point */}
-					<div className="group bg-white/25 backdrop-blur-md border border-white/30 rounded-2xl p-8 flex flex-col items-center justify-center shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 relative overflow-hidden" style={{ filter: 'drop-shadow(0 8px 24px #68961022)' }}>
-						<div className="w-16 h-16 rounded-xl flex items-center justify-center mb-4 border border-white/40" style={{ backgroundColor: '#689610' }}>
-							<Package className="w-10 h-10 text-white" />
+					<div className="group bg-white/25 backdrop-blur-md border border-white/30 rounded-xl p-6 flex flex-col items-center justify-center shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 relative overflow-hidden" style={{ filter: 'drop-shadow(0 8px 24px #68961022)' }}>
+						<div className="w-12 h-12 rounded-lg flex items-center justify-center mb-3 border border-white/40" style={{ backgroundColor: '#689610' }}>
+							<Package className="w-7 h-7 text-white" />
 						</div>
-						<h2 className="font-bold text-xl text-gray-800 mb-2">Go to Pickup Point</h2>
-						<p className="text-gray-600 text-sm mb-6 text-center">Deliver at a certified point</p>
+						<h2 className="font-bold text-lg text-gray-800 mb-2">Go to Pickup Point</h2>
+						<p className="text-gray-600 text-xs mb-4 text-center">Deliver at a certified point</p>
 						<button
 							onClick={() => setCurrentStep("map")}
-							className="mt-auto px-8 py-3 rounded-xl font-bold text-white shadow-lg bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 transition-all text-lg tracking-wide"
+							className="mt-auto px-6 py-2 rounded-lg font-bold text-white shadow-lg bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 transition-all text-sm tracking-wide"
 						>
 							Select
 						</button>
 					</div>
 					{/* Card Home Pickup */}
-					<div className="group bg-white/25 backdrop-blur-md border border-white/30 rounded-2xl p-8 flex flex-col items-center justify-center shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 relative overflow-hidden" style={{ filter: 'drop-shadow(0 8px 24px #43B2D222)' }}>
-						<div className="w-16 h-16 rounded-xl flex items-center justify-center mb-4 border border-white/40" style={{ backgroundColor: '#43B2D2' }}>
-							<Package className="w-10 h-10 text-white" />
+					<div className="group bg-white/25 backdrop-blur-md border border-white/30 rounded-xl p-6 flex flex-col items-center justify-center shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 relative overflow-hidden" style={{ filter: 'drop-shadow(0 8px 24px #43B2D222)' }}>
+						<div className="w-12 h-12 rounded-lg flex items-center justify-center mb-3 border border-white/40" style={{ backgroundColor: '#43B2D2' }}>
+							<Package className="w-7 h-7 text-white" />
 						</div>
-						<h2 className="font-bold text-xl text-gray-800 mb-2">Request Home Pickup</h2>
-						<p className="text-gray-600 text-sm mb-6 text-center">We pick up at your address (min. 10kg)</p>
+						<h2 className="font-bold text-lg text-gray-800 mb-2">Request Home Pickup</h2>
+						<p className="text-gray-600 text-xs mb-4 text-center">We pick up at your address (min. 10kg)</p>
 						<button
 							onClick={() => setOpenModal(true)}
-							className="mt-auto px-8 py-3 rounded-xl font-bold text-white shadow-lg bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 transition-all text-lg tracking-wide"
+							className="mt-auto px-6 py-2 rounded-lg font-bold text-white shadow-lg bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 transition-all text-sm tracking-wide"
 						>
 							Select
 						</button>
@@ -626,12 +626,15 @@ export default function ContributeClothingPage() {
 
   // Paso 3: Mapa (Google Maps interactivo con puntos de recolha)
   if (currentStep === "map") {
-    // Mock points for Vila Real
-    const points = [
-      { name: "Vila Real Center", lat: 41.1511, lng: -7.8029 },
-      { name: "Municipal Library", lat: 41.3086, lng: -7.7461 },
-      { name: "Municipal Market", lat: 41.3006, lng: -7.7441 }
-    ];
+      // Latin American cities with flags
+  const points = [
+    { name: "🇨🇴 Bogotá Center", lat: 4.7110, lng: -74.0721 },
+    { name: "🇧🇷 Rio de Janeiro Market", lat: -22.9068, lng: -43.1729 },
+    { name: "🇦🇷 Buenos Aires Library", lat: -34.6118, lng: -58.3960 },
+    { name: "🇨🇱 Santiago Center", lat: -33.4489, lng: -70.6693 },
+    { name: "🇧🇴 La Paz Market", lat: -16.4897, lng: -68.1193 },
+    { name: "🇲🇽 Mexico City Library", lat: 19.4326, lng: -99.1332 }
+  ];
     const center = selected !== null ? points[selected] : { lat: 41.3006, lng: -7.7441 };
     // OpenStreetMap embed URL
     const mapSrc = `https://www.openstreetmap.org/export/embed.html?bbox=-7.7500,41.2900,-7.7200,41.3100&layer=mapnik&marker=${center.lat},${center.lng}`;
@@ -647,14 +650,14 @@ export default function ContributeClothingPage() {
       >
         <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-100 p-4 overflow-y-auto">
           <div className="max-w-sm mx-auto mt-0">
-            <div className="bg-white rounded-2xl p-4 mb-4 shadow-lg text-center">
-              <div className="mb-3 text-gray-700 font-medium">Select a pickup point:</div>
-              <div className="space-y-2 mb-4">
+            <div className="bg-white rounded-xl p-4 mb-4 shadow-lg text-center">
+              <div className="mb-2 text-gray-700 font-medium text-sm">Select a pickup point:</div>
+              <div className="space-y-2 mb-3">
                 {points.map((p, i) => (
                   <button
                     key={i}
                     onClick={() => setSelected(i)}
-                    className={`w-full py-3 rounded-xl font-semibold border transition-all ${selected===i ? 'bg-orange-500 text-white border-orange-500' : 'bg-gray-50 text-gray-800 border-gray-200 hover:bg-orange-100'}`}
+                    className={`w-full py-2 rounded-lg font-semibold border transition-all text-sm ${selected===i ? 'bg-orange-500 text-white border-orange-500' : 'bg-gray-50 text-gray-800 border-gray-200 hover:bg-orange-100'}`}
                   >
                     {p.name}
                   </button>
@@ -762,34 +765,34 @@ export default function ContributeClothingPage() {
 			showLogo={true}
 			userName="User"
 		>
-			<div className="min-h-screen bg-[#EDE4DA] bg-[url('/fondo.png')] bg-cover bg-center flex flex-col items-center justify-center py-10 relative">
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-2xl">
+			<div className="min-h-screen bg-[#EDE4DA] bg-[url('/fondo.png')] bg-cover bg-center flex flex-col items-center justify-center py-6 relative overflow-y-auto">
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-xl">
 					{/* Card Donar */}
-					<div className="group bg-white/25 backdrop-blur-md border border-white/30 rounded-2xl p-8 flex flex-col items-center justify-center shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 relative overflow-hidden" style={{ filter: 'drop-shadow(0 8px 24px #68961022)' }}>
-						<div className="w-16 h-16 rounded-xl flex items-center justify-center mb-4 border border-white/40" style={{ backgroundColor: '#689610' }}>
-							<Heart className="w-10 h-10 text-white" />
+					<div className="group bg-white/25 backdrop-blur-md border border-white/30 rounded-xl p-6 flex flex-col items-center justify-center shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 relative overflow-hidden" style={{ filter: 'drop-shadow(0 8px 24px #68961022)' }}>
+						<div className="w-12 h-12 rounded-lg flex items-center justify-center mb-3 border border-white/40" style={{ backgroundColor: '#689610' }}>
+							<Heart className="w-7 h-7 text-white" />
 						</div>
-						<h2 className="font-bold text-xl text-gray-800 mb-2">{t('donateFree')}</h2>
-						<p className="text-gray-600 text-sm mb-6 text-center">{t('donateCardDesc')}</p>
+						<h2 className="font-bold text-lg text-gray-800 mb-2">Donate for free</h2>
+						<p className="text-gray-600 text-xs mb-4 text-center">Free for those in need</p>
 						<button
-							onClick={() => setCurrentStep("tracking")}
-							className="mt-auto px-8 py-3 rounded-xl font-bold text-white shadow-lg bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 transition-all text-lg tracking-wide"
+							onClick={() => router.push("/profile/passport")}
+							className="mt-auto px-6 py-2 rounded-lg font-bold text-white shadow-lg bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 transition-all text-sm tracking-wide"
 						>
-							{t('selectButton')}
+							Select
 						</button>
 					</div>
 					{/* Card Vender */}
-					<div className="group bg-white/25 backdrop-blur-md border border-white/30 rounded-2xl p-8 flex flex-col items-center justify-center shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 relative overflow-hidden" style={{ filter: 'drop-shadow(0 8px 24px #F4780222)' }}>
-						<div className="w-16 h-16 rounded-xl flex items-center justify-center mb-4 border border-white/40" style={{ backgroundColor: '#F47802' }}>
-							<Package className="w-10 h-10 text-white" />
+					<div className="group bg-white/25 backdrop-blur-md border border-white/30 rounded-xl p-6 flex flex-col items-center justify-center shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 relative overflow-hidden" style={{ filter: 'drop-shadow(0 8px 24px #F4780222)' }}>
+						<div className="w-12 h-12 rounded-lg flex items-center justify-center mb-3 border border-white/40" style={{ backgroundColor: '#F47802' }}>
+							<Package className="w-7 h-7 text-white" />
 						</div>
-						<h2 className="font-bold text-xl text-gray-800 mb-2">{t('sellClothes')}</h2>
-						<p className="text-gray-600 text-sm mb-6 text-center">{t('sellCardDesc')}</p>
+						<h2 className="font-bold text-lg text-gray-800 mb-2">Sell (€2/item)</h2>
+						<p className="text-gray-600 text-xs mb-4 text-center">€1 for you, €1 for INFINITO</p>
 						<button
-							onClick={() => setCurrentStep("tracking")}
-							className="mt-auto px-8 py-3 rounded-xl font-bold text-white shadow-lg bg-gradient-to-r from-orange-400 to-pink-500 hover:from-orange-500 hover:to-pink-600 transition-all text-lg tracking-wide"
+							onClick={() => router.push("/profile/sell-products")}
+							className="mt-auto px-6 py-2 rounded-lg font-bold text-white shadow-lg bg-gradient-to-r from-orange-400 to-pink-500 hover:from-orange-500 hover:to-pink-600 transition-all text-sm tracking-wide"
 						>
-							{t('selectButton')}
+							Select
 						</button>
 					</div>
 				</div>
@@ -803,35 +806,7 @@ export default function ContributeClothingPage() {
 	);
 }
 
-  // Paso 5: Tracking (placeholder)
-  if (currentStep === "tracking") {
-    return (
-      <InfinitoLayout
-        title={t('contributeClothing')}
-        subtitle={t('giveNewLife')}
-        showHeader={true}
-        showBackButton={true}
-        showBottomMenu={true}
-        showLogo={true}
-        userName="Utilizador"
-      >
-        <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100 p-4">
-          <div className="max-w-sm mx-auto">
-            <div className="flex items-center mb-6">
-              <h1 className="text-xl font-bold text-gray-800">{t('myContributions')}</h1>
-            </div>
-            <div className="bg-white/80 rounded-2xl p-6 mb-6 shadow-lg text-center">
-              <p className="text-gray-600">{t('trackingDashboardMessage')}</p>
-            </div>
-            <button onClick={() => router.push("/profile/passport")}
-              className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-4 rounded-2xl font-bold shadow-lg">
-              {t('viewFullPassport')}
-            </button>
-          </div>
-        </div>
-      </InfinitoLayout>
-    );
-  }
+
 
   return null;
 }
