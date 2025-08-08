@@ -95,7 +95,7 @@ const SellProductsPage = () => {
 
         {/* Componente principal - sem limitações de width */}
         <div className="w-full">
-          <SellSectionWithAI language={language} t={t} />
+          <SellSectionWithAI tracking="" />
         </div>
       </div>
       
