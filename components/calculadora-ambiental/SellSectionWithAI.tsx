@@ -162,8 +162,8 @@ export default function SellSectionWithAI({ tracking }: { tracking: string }) {
 				tracking: tracking.trim(),
 				price: Number(15.0) || 15.0, // Asegurar que es un número válido
 				originalPrice: Number(15.0) || 15.0,
-				commission: Number(product.commission) || 0,
-				finalPrice: Number(product.finalPrice) || Number(15.0) || 15.0,
+				commission: Number(0) || 0,
+				finalPrice: Number(15.0) || Number(15.0) || 15.0,
 				sellerName: seller?.name || form.name || 'Anonymous Seller',
 				sellerEmail: seller?.email || form.email || '',
 				sellerPhone: seller?.phone || form.phone || '',
