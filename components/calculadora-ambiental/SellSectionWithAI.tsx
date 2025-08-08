@@ -99,7 +99,6 @@ export default function SellSectionWithAI({ tracking }: { tracking: string }) {
 	const handlePublish = async () => {
 		console.log('🔍 Debug: Starting handlePublish');
 		console.log('🔍 Debug: product =', product);
-		console.log('🔍 Debug: product.suggestedPrice =', product?.suggestedPrice);
 		console.log('🔍 Debug: seller =', seller);
 		console.log('🔍 Debug: form =', form);
 		console.log('🔍 Debug: tracking =', tracking);
