@@ -5,7 +5,6 @@ import { useUser, useLanguage } from '../../components/theme-provider';
 import { useEffect, useState } from 'react';
 import GoogleSignIn from '../../components/GoogleSignIn';
 import { Globe, Sparkles, Shield, Zap, ArrowRight } from 'lucide-react';
-import { PasskeyKit } from 'passkey-kit-next';
 import Image from 'next/image';
 
 export default function SplashContent() {
