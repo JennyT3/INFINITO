@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { 
 	Search, Filter, Heart, ShoppingBag, Grid, List, 
 	MapPin, Droplets, Leaf, X, ChevronDown, 
-	ArrowLeft, Zap, Award, CreditCard, Star, Plus, Palette, Building2
+	ArrowLeft, Zap, Award, CreditCard, Star, Plus, Palette, Building2, User
 } from 'lucide-react';
 import InfinitoLayout from '../../components/InfinitoLayout';
 import { useTranslation } from '../../hooks/useTranslation';
