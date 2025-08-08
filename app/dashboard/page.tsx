@@ -1,16 +1,25 @@
 "use client";
 import { useRouter } from 'next/navigation';
 import { useLanguage, useUser } from '../../components/theme-provider';
-import { Heart, ShoppingBag, Tag, Fingerprint, Calculator } from 'lucide-react';
+import { Heart, ShoppingBag, Tag, Fingerprint, Calculator, TrendingUp, Leaf, Award } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from '../../hooks/useTranslation';
-import Image from 'next/image';
+import StellarWallet from '../../components/StellarWallet';
+import BottomNavigationMenu from '../../components/BottomNavigationMenu';
 
 export default function DashboardPage() {
 	const router = useRouter();
 	const { language } = useLanguage();
 	const { userName, email } = useUser();
 	const { t } = useTranslation();
+	const [currentTime, setCurrentTime] = useState(new Date());
+
+	useEffect(() => {
+		const timer = setInterval(() => {
+			setCurrentTime(new Date());
+		}, 1000);
+		return () => clearInterval(timer);
+	}, []);
 
 	const handleClick = (path: string) => {
 		router.push(path);
@@ -19,260 +28,205 @@ export default function DashboardPage() {
 	const mainActions = [
 		{
 			id: 'contribute',
-			icon: <Heart className="w-6 h-6 md:w-8 md:h-8 text-white" />, 
-			label: t('contribute'),
-			description: t('donateDesc'),
+			icon: Heart,
+			label: 'Contribute',
+			description: 'Donate clothes for free',
 			path: '/contribuir',
 			color: '#689610',
-			hoverColor: '#7BA428'
+			gradient: 'from-green-500 to-emerald-500'
 		},
 		{
 			id: 'buy',
-			icon: <ShoppingBag className="w-6 h-6 md:w-8 md:h-8 text-white" />, 
-			label: t('buy'),
-			description: t('buyDesc'),
+			icon: ShoppingBag,
+			label: 'Marketplace',
+			description: 'Buy sustainable products',
 			path: '/marketplace',
 			color: '#813684',
-			hoverColor: '#9B4A97'
+			gradient: 'from-purple-500 to-pink-500'
 		},
 		{
 			id: 'sell',
-			icon: <Tag className="w-6 h-6 md:w-8 md:h-8 text-white" />, 
-			label: t('sell'),
-			description: t('sellDesc'),
+			icon: Tag,
+			label: 'Sell',
+			description: 'Sell your items',
 			path: '/profile/sell-products',
 			color: '#F47802',
-			hoverColor: '#FF8C15'
+			gradient: 'from-orange-500 to-red-500'
 		},
 		{
 			id: 'passport',
-			icon: <Fingerprint className="w-6 h-6 md:w-8 md:h-8 text-white" />, 
-			label: t('footprint'),
-			description: t('footprintDesc'),
+			icon: Fingerprint,
+			label: 'Impact Passport',
+			description: 'View your environmental impact',
 			path: '/profile/impact-passport',
 			color: '#43B2D2',
-			hoverColor: '#56C4E5'
+			gradient: 'from-blue-500 to-cyan-500'
 		}
 	];
 
-	// Banner de publicidad aleatorio
-	const banners = [
-		{
-			text: t('bannerTitle'),
-			subtitle: t('bannerSubtitle'),
-			color: '#689610',
-			bg: 'from-green-200 to-green-50'
-		},
-		{
-			text: t('bannerRecycle'),
-			subtitle: t('bannerNFT'),
-			color: '#3E88FF',
-			bg: 'from-blue-200 to-blue-50'
-		},
-		{
-			text: t('bannerImpact'),
-			subtitle: t('bannerEachPiece'),
-			color: '#D42D66',
-			bg: 'from-pink-200 to-pink-50'
-		},
-		{
-			text: t('bannerCalc'),
-			subtitle: t('bannerDiscover'),
-			color: '#EAB308',
-			bg: 'from-yellow-200 to-yellow-50'
-		}
-	];
-	const [bannerIdx, setBannerIdx] = useState(0);
-	useEffect(() => {
-		setBannerIdx(Math.floor(Math.random() * banners.length));
-	}, []);
-
-	// SVG para el banner de impacto
-	const BannerImpactSVG = () => (
-		<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-			<circle cx="32" cy="32" r="32" fill="#EDE4DA"/>
-			<ellipse cx="32" cy="44" rx="18" ry="6" fill="#B6C97A" fillOpacity="0.25"/>
-			<path d="M32 44C38.6274 44 44 38.6274 44 32C44 25.3726 38.6274 20 32 20C25.3726 20 20 25.3726 20 32C20 38.6274 25.3726 44 32 44Z" fill="#B6C97A"/>
-			<circle cx="32" cy="32" r="10" fill="#43B2D2" fillOpacity="0.18"/>
-			<path d="M32 28C34.2091 28 36 29.7909 36 32C36 34.2091 34.2091 36 32 36C29.7909 36 28 34.2091 28 32C28 29.7909 29.7909 28 32 28Z" fill="#D42D66" fillOpacity="0.22"/>
-			<path d="M24 40C26.5 36 37.5 36 40 40" stroke="#689610" strokeWidth="2" strokeLinecap="round"/>
-			<circle cx="24" cy="28" r="2" fill="#EAB308"/>
-			<circle cx="40" cy="28" r="2" fill="#3E88FF"/>
-			<rect x="28" y="38" width="8" height="2" rx="1" fill="#B6C97A"/>
-		</svg>
-	);
-
-	const searchPages = [
-		{ label: t('contribute'), path: '/contribuir' },
-		{ label: t('buy'), path: '/marketplace' },
-		{ label: t('sell'), path: '/profile/sell-products' },
-		{ label: t('footprint'), path: '/profile/impact-passport' },
-		{ label: t('calcTitle'), path: '/calculadora-ambiental' },
-		{ label: t('profile.myOrders'), path: '/profile' },
-		{ label: t('dashboard'), path: '/dashboard' },
-		{ label: t('certificates'), path: '/profile/certificate-generator' },
-	];
-	const [search, setSearch] = useState('');
-	const [showSuggestions, setShowSuggestions] = useState(false);
-	const inputRef = useRef(null);
-	const filteredPages = search
-		? searchPages.filter(p => p.label.toLowerCase().includes(search.toLowerCase()))
-		: [];
-
-	// Animaciones CSS para la Tierra y los botones futuristas
-	const dashboardStyles = `
-	@keyframes earth-rotation-3d {
-		0% { transform: rotateY(0deg) rotateX(18deg); }
-		100% { transform: rotateY(360deg) rotateX(18deg); }
-	}
-	.earth-rotation {
-		animation: earth-rotation-3d 18s linear infinite;
-		transform-style: preserve-3d;
-		will-change: transform;
-	}
-	.futuristic-btn {
-		background: linear-gradient(90deg, #689610, #3E88FF, #D42D66, #EAB308, #F47802, #43B2D2, #813684);
-		background-size: 400% 400%;
-		animation: gradient-move 8s ease-in-out infinite;
-		border: 2px solid #b6c97a;
-		box-shadow: 0 0 24px 4px rgba(104,150,16,0.12), 0 0 48px 8px rgba(62,136,255,0.10);
-		color: #fff;
-		font-weight: bold;
-		letter-spacing: 0.04em;
-		text-shadow: 0 2px 8px rgba(0,0,0,0.12);
-		transition: box-shadow 0.3s, transform 0.2s;
-		position: relative;
-		overflow: hidden;
-	}
-	.futuristic-btn:hover, .futuristic-btn:focus {
-		box-shadow: 0 0 40px 10px #3E88FF99, 0 0 80px 20px #D42D6699;
-		transform: scale(1.06);
-		outline: none;
-	}
-	@keyframes gradient-move {
-		0% { background-position: 0% 50%; }
-		50% { background-position: 100% 50%; }
-		100% { background-position: 0% 50%; }
-	}
-	.futuristic-btn .icon-glow {
-		filter: drop-shadow(0 0 12px #43B2D2) drop-shadow(0 0 24px #81368433);
-		transition: filter 0.3s;
-	}
-	.futuristic-btn:hover .icon-glow {
-		filter: drop-shadow(0 0 32px #EAB308) drop-shadow(0 0 48px #D42D66);
-	}
-	`;
+	// Calculate clock hands positions
+	const hours = currentTime.getHours() % 12;
+	const minutes = currentTime.getMinutes();
+	const seconds = currentTime.getSeconds();
+	
+	const hourAngle = (hours * 30) + (minutes * 0.5);
+	const minuteAngle = minutes * 6;
+	const secondAngle = seconds * 6;
 
 	return (
-		<div className="min-h-screen bg-[#EDE4DA] bg-[url('/fondo.png')] bg-cover bg-center pb-20 font-raleway overflow-y-auto flex flex-col">
-			{/* Header superior */}
-			<div className="flex justify-between items-center px-8 pt-8 pb-4">
-				<div className="bg-white/70 border border-[#b6c97a] rounded-xl px-6 py-3 flex items-center gap-4 shadow-sm" style={{ minWidth: 220 }}>
-					<span className="text-lg font-bold text-infinito-pink">{t('hello')} <span className="text-gray-700">{userName}</span></span>
-					<span className="text-2xl">🖐️</span>
-				</div>
-				<button className="w-12 h-12 bg-white/70 border border-[#b6c97a] rounded-xl flex items-center justify-center shadow-sm">
-					<svg className="lucide lucide-bell w-7 h-7 text-gray-700" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-				</button>
-			</div>
-			{/* Layout principal */}
-			<div className="flex-1 flex flex-col md:flex-row gap-0 md:gap-8 max-w-7xl mx-auto w-full px-2 md:px-8 pb-8">
-				{/* Columna izquierda: Planeta */}
-				<div className="flex-1 flex flex-col items-center justify-center md:justify-start pt-2 md:pt-12">
-					<div className="relative earth-orbit" style={{ filter: 'drop-shadow(0 16px 48px rgba(104,150,16,0.18))' }}>
-						<div className="relative w-72 h-72 md:w-[420px] md:h-[420px] mx-auto">
-							<Image alt="Earth" width={420} height={420} className="absolute inset-0 w-full h-full earth-rotation rounded-full z-10" style={{ color: 'transparent' }} src="/earth.png" />
-							{/* Highlight superior izquierdo */}
-							<div className="absolute inset-0 rounded-full z-20 pointer-events-none" style={{
-								background: 'radial-gradient(circle at 30% 28%, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.10) 18%, transparent 60%)'
-							}} />
-							{/* Sombra inferior derecha */}
-							<div className="absolute inset-0 rounded-full z-20 pointer-events-none" style={{
-								background: 'radial-gradient(circle at 70% 75%, rgba(0,0,0,0.13) 0%, transparent 60%)'
-							}} />
-							{/* Glow ambiental */}
-							<div style={{ background: 'radial-gradient(circle at 30% 30%, rgba(104,150,16,0.13) 0%, transparent 70%)' }} className="absolute inset-0 rounded-full animate-glow z-0"></div>
-						</div>
-					</div>
-				</div>
-				{/* Columna derecha: Contenido */}
-				<div className="flex-1 flex flex-col items-center md:items-start justify-center md:justify-start pt-6 md:pt-16 gap-6 md:gap-8 max-w-xl mx-auto w-full">
-					<h1 className="text-2xl md:text-4xl font-light text-gray-700 tracking-infinito-wide mb-2 text-center md:text-left" style={{ fontFamily: 'Raleway, sans-serif' }}>{t('whatDo')}</h1>
-					{/* Buscador */}
-					<div className="w-full flex items-center justify-center md:justify-start mb-4">
-						<div className="relative w-full max-w-xs">
-							<input
-								ref={inputRef}
-								type="text"
-								value={search}
-								onChange={e => { setSearch(e.target.value); setShowSuggestions(true); }}
-								onFocus={() => setShowSuggestions(true)}
-								onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-								placeholder={t('search' as any) || 'Buscar...'}
-								className="w-full rounded-xl border border-[#b6c97a] bg-white/80 px-4 py-2 pr-10 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#b6c97a] shadow-sm font-raleway"
-								style={{ fontSize: '1rem' }}
-							/>
-							<span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#b6c97a]">
-								<svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-							</span>
-							{showSuggestions && filteredPages.length > 0 && (
-								<div className="absolute left-0 right-0 mt-2 bg-white border border-[#b6c97a] rounded-xl shadow-lg z-20 overflow-hidden">
-									{filteredPages.map((p, idx) => (
-										<button
-											key={p.path}
-											onMouseDown={e => { e.preventDefault(); setShowSuggestions(false); setSearch(''); router.push(p.path); }}
-											className={`w-full text-left px-4 py-2 hover:bg-[#b6c97a]/10 text-gray-800 font-raleway ${idx !== filteredPages.length - 1 ? 'border-b border-[#e2d3c3]' : ''}`}
-										>
-											{p.label}
-										</button>
-									))}
-								</div>
-							)}
-						</div>
-					</div>
-					{/* Botones principales */}
-					<div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full mb-2">
-						{mainActions.map((action) => (
-							<button
-								key={action.id}
-								onClick={() => handleClick(action.path)}
-								className="group bg-white/90 border-2 border-[#b6c97a] rounded-2xl flex flex-col items-center justify-center shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden hover:scale-105 min-h-[90px] md:min-h-[110px]"
-								style={{ minWidth: 90 }}
-							>
-								<div className="w-10 h-10 md:w-14 md:h-14 rounded-xl flex items-center justify-center mb-2 border border-white/40 group-hover:scale-110 transition-transform duration-300 shadow-sm" style={{ backgroundColor: action.color, boxShadow: `0 2px 12px 0 ${action.color}22` }}>
-									{action.icon}
-								</div>
-								<span className="text-base md:text-lg font-bold text-gray-800 tracking-wide font-raleway" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.07)' }}>{action.label}</span>
-							</button>
-						))}
-					</div>
-					{/* Banner */}
-					<div className="w-full rounded-xl flex items-center gap-4 px-4 py-3 bg-[#f6e7d6] border border-[#e2d3c3] shadow-sm">
-						<div className="flex-shrink-0">
-							<BannerImpactSVG />
-						</div>
-						<div className="flex-1">
-							<div className="text-base md:text-lg font-bold text-[#7a5c2e]">{banners[bannerIdx].text}</div>
-							<div className="text-xs md:text-sm text-[#7a5c2e] opacity-80">{banners[bannerIdx].subtitle}</div>
-						</div>
-						<button className="ml-2 text-[#7a5c2e] opacity-60 hover:opacity-100 text-xl">✕</button>
-					</div>
-					{/* Calculadora Ambiental */}
-					<div className="w-full rounded-xl bg-white/90 border border-[#b6c97a] shadow-md flex items-center px-4 py-4 gap-4">
-						<div className="flex-shrink-0">
-							<div className="w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center infinito-green shadow animate-float">
-								<Calculator className="w-7 h-7 md:w-10 md:h-10 text-white" />
+		<>
+			<style jsx>{`
+				@keyframes gradient-flow {
+					0% { background-position: 0% 50%; }
+					50% { background-position: 100% 50%; }
+					100% { background-position: 0% 50%; }
+				}
+				
+				@keyframes float-card {
+					0%, 100% { transform: translateY(0px); }
+					50% { transform: translateY(-5px); }
+				}
+
+				@keyframes clock-tick {
+					0% { transform: rotate(0deg); }
+					100% { transform: rotate(360deg); }
+				}
+			`}</style>
+			
+			<StellarWallet />
+			
+			<div 
+				className="min-h-screen font-raleway relative pb-24 pt-16"
+				style={{
+					backgroundColor: "#EDE4DA",
+					backgroundImage: "url('/fondo.png'), radial-gradient(circle at 20% 50%, rgba(120, 119, 108, 0.1) 1px, transparent 1px), radial-gradient(circle at 80% 20%, rgba(120, 119, 108, 0.1) 1px, transparent 1px)",
+					backgroundSize: "cover, 20px 20px, 25px 25px",
+					backgroundRepeat: "no-repeat, repeat, repeat"
+				}}
+			>
+				{/* Header */}
+				<div className="bg-white/20 backdrop-blur-md border-b border-white/30 px-6 py-4 sticky top-16 z-10">
+					<div className="flex items-center justify-between max-w-sm mx-auto md:max-w-4xl lg:max-w-6xl">
+						<div className="flex items-center gap-3">
+							<div className="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center">
+								<TrendingUp className="w-6 h-6 text-white" />
+							</div>
+							<div>
+								<h1 className="font-bold text-lg text-gray-800">Dashboard</h1>
+								<p className="text-sm text-gray-600">Welcome back, {userName || 'User'}!</p>
 							</div>
 						</div>
-						<div className="flex-1">
-							<div className="font-bold text-gray-800 text-base md:text-lg mb-1">{t('calcTitle')}</div>
-							<div className="text-xs md:text-sm text-gray-600">{t('calcDesc')}</div>
-						</div>
-						<button onClick={() => handleClick('/calculadora-ambiental')} className="futuristic-btn px-6 py-3 text-base md:text-lg rounded-xl font-bold shadow transition">{t('calcBtn')}</button>
 					</div>
 				</div>
+
+				{/* Main Content */}
+				<div className="max-w-sm mx-auto md:max-w-4xl lg:max-w-6xl px-4 py-6">
+					{/* Clock Section */}
+					<div className="bg-white/25 backdrop-blur-md border border-white/30 rounded-2xl p-6 mb-6 shadow-lg">
+						<div className="text-center mb-4">
+							<h2 className="text-xl font-bold text-gray-800 mb-2">Circular Time</h2>
+							<p className="text-sm text-gray-600">Your sustainable journey</p>
+						</div>
+						
+						<div className="flex justify-center mb-4">
+							<div className="relative w-32 h-32">
+								{/* Clock face */}
+								<div className="absolute inset-0 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center">
+									<div className="w-28 h-28 bg-white rounded-full flex items-center justify-center">
+										{/* Clock hands */}
+										<div className="relative w-24 h-24">
+											{/* Hour hand */}
+											<div 
+												className="absolute top-1/2 left-1/2 w-1 h-8 bg-gray-800 origin-bottom"
+												style={{ 
+													transform: `translateX(-50%) translateY(-100%) rotate(${hourAngle}deg)`,
+													transition: 'transform 0.5s ease-out'
+												}}
+											/>
+											{/* Minute hand */}
+											<div 
+												className="absolute top-1/2 left-1/2 w-0.5 h-10 bg-gray-600 origin-bottom"
+												style={{ 
+													transform: `translateX(-50%) translateY(-100%) rotate(${minuteAngle}deg)`,
+													transition: 'transform 0.5s ease-out'
+												}}
+											/>
+											{/* Second hand */}
+											<div 
+												className="absolute top-1/2 left-1/2 w-0.5 h-12 bg-red-500 origin-bottom"
+												style={{ 
+													transform: `translateX(-50%) translateY(-100%) rotate(${secondAngle}deg)`,
+													transition: 'transform 0.1s linear'
+												}}
+											/>
+											{/* Center dot */}
+											<div className="absolute top-1/2 left-1/2 w-2 h-2 bg-gray-800 rounded-full transform -translate-x-1 -translate-y-1" />
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						
+						<div className="text-center">
+							<div className="text-2xl font-bold text-gray-800">
+								{currentTime.toLocaleTimeString()}
+							</div>
+							<div className="text-sm text-gray-600">
+								{currentTime.toLocaleDateString()}
+							</div>
+						</div>
+					</div>
+
+					{/* Stats Cards */}
+					<div className="grid grid-cols-2 gap-4 mb-6">
+						<div className="bg-white/25 backdrop-blur-md border border-white/30 rounded-xl p-4 shadow-lg">
+							<div className="flex items-center gap-3">
+								<div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+									<Leaf className="w-5 h-5 text-white" />
+								</div>
+								<div>
+									<div className="text-sm text-gray-600">CO₂ Saved</div>
+									<div className="text-lg font-bold text-gray-800">24.5 kg</div>
+								</div>
+							</div>
+						</div>
+						
+						<div className="bg-white/25 backdrop-blur-md border border-white/30 rounded-xl p-4 shadow-lg">
+							<div className="flex items-center gap-3">
+								<div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+									<Award className="w-5 h-5 text-white" />
+								</div>
+								<div>
+									<div className="text-sm text-gray-600">Contributions</div>
+									<div className="text-lg font-bold text-gray-800">12</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					{/* Main Actions Grid */}
+					<div className="grid grid-cols-2 gap-4">
+						{mainActions.map((action) => (
+							<div
+								key={action.id}
+								onClick={() => handleClick(action.path)}
+								className="group bg-white/25 backdrop-blur-md border border-white/30 rounded-xl p-4 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer"
+								style={{ filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.1))' }}
+							>
+								<div className="flex flex-col items-center text-center">
+									<div className={`w-12 h-12 bg-gradient-to-r ${action.gradient} rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300`}>
+										<action.icon className="w-6 h-6 text-white" />
+									</div>
+									<h3 className="font-bold text-gray-800 mb-1">{action.label}</h3>
+									<p className="text-xs text-gray-600 leading-relaxed">{action.description}</p>
+								</div>
+							</div>
+						))}
+					</div>
+				</div>
+
+				<BottomNavigationMenu />
 			</div>
-			<style jsx>{dashboardStyles}</style>
-		</div>
+		</>
 	);
 } 
