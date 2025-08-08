@@ -3,6 +3,7 @@ import { ArrowLeft, Gift, Shirt, Image as ArtIcon, RefreshCw, MapPin } from "luc
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useTranslation } from '../../hooks/useTranslation';
+import BottomNavigationMenu from '../../components/BottomNavigationMenu';
 
 const BUTTON_SIZE = 140;
 
