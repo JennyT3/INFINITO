@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import BottomNavigationMenu from "@/components/BottomNavigationMenu";
 
 export default function ImpactPassportPage() {
   const router = useRouter();
@@ -83,7 +84,7 @@ export default function ImpactPassportPage() {
             </svg>
           </button>
           <h1 className="font-bold text-lg md:text-xl text-gray-800 tracking-wider">
-            Environmental Passport
+            Track Your Contribution
           </h1>
           <div className="w-10 md:w-12"></div>
         </div>
@@ -187,6 +188,8 @@ export default function ImpactPassportPage() {
           </button>
         </div>
       </div>
+
+      <BottomNavigationMenu />
     </div>
   );
 } 
