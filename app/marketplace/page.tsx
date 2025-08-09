@@ -1,18 +1,16 @@
 "use client";
 import { useState } from 'react';
 import { Search, Heart, ShoppingBag } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import BottomNavigationMenu from '../../components/BottomNavigationMenu';
 
 export default function Marketplace() {
-  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
 
   const products = [
-    { id: 1, name: 'Blue T-shirt', price: 15, image: '/placeholder.jpg', liked: false },
-    { id: 2, name: 'Jeans', price: 35, image: '/placeholder.jpg', liked: true },
-    { id: 3, name: 'Dress', price: 25, image: '/placeholder.jpg', liked: false },
-    { id: 4, name: 'Jacket', price: 45, image: '/placeholder.jpg', liked: false }
+    { id: 1, name: 'Blue T-shirt', price: 15, liked: false },
+    { id: 2, name: 'Jeans', price: 35, liked: true },
+    { id: 3, name: 'Dress', price: 25, liked: false },
+    { id: 4, name: 'Jacket', price: 45, liked: false }
   ];
 
   const filteredProducts = products.filter(product => 
