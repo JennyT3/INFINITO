@@ -8,11 +8,11 @@ export default function BottomNavigationMenu() {
   const pathname = usePathname();
 
   const navItems = [
-    { icon: <Share2 className="w-5 h-5" />, label: 'Share', path: '/share' },
-    { icon: <Tag className="w-5 h-5" />, label: 'Sell', path: '/profile/sell-products' },
+    { icon: <Share2 className="w-5 h-5" />, label: 'Share', path: '/share', isLogo: false },
+    { icon: <Tag className="w-5 h-5" />, label: 'Sell', path: '/profile/sell-products', isLogo: false },
     { icon: null, label: 'Home', path: '/dashboard', isLogo: true },
-    { icon: <ShoppingBag className="w-5 h-5" />, label: 'Buy', path: '/marketplace' },
-    { icon: <User className="w-5 h-5" />, label: 'Profile', path: '/profile' }
+    { icon: <ShoppingBag className="w-5 h-5" />, label: 'Buy', path: '/marketplace', isLogo: false },
+    { icon: <User className="w-5 h-5" />, label: 'Profile', path: '/profile', isLogo: false }
   ];
 
   const isActive = (path: string) => {
